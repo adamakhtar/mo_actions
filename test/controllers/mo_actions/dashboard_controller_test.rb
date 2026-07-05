@@ -14,6 +14,12 @@ module MoActions
       assert_response :success
       assert_select "h1", "Mo Actions"
       assert_select "p", "Signed in as Ada"
+      assert_select "h2", "Billing"
+      assert_select "h3", "Import Users"
+      assert_select "p", "Import users from an uploaded source."
+      assert_select "h3", "Send Invoice Reminders"
+      assert_select "h2", "Maintenance"
+      assert_select "h3", "Purge Stale Sessions"
     end
 
     test "unauthenticated requests are rejected" do
