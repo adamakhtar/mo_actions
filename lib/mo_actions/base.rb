@@ -1,7 +1,5 @@
 module MoActions
   class Base
-    UNSET = Object.new
-
     class << self
       def inherited(subclass)
         super
@@ -16,8 +14,8 @@ module MoActions
         Module.instance_method(:name).bind_call(self)
       end
 
-      def key(value = UNSET)
-        if value.equal?(UNSET)
+      def key(value = nil)
+        if value.nil?
           @key || derived_key
         else
           @key = value.to_s
@@ -25,24 +23,24 @@ module MoActions
         end
       end
 
-      def name(value = UNSET)
-        if value.equal?(UNSET)
+      def name(value = nil)
+        if value.nil?
           @name || key.humanize
         else
           @name = value.to_s
         end
       end
 
-      def description(value = UNSET)
-        if value.equal?(UNSET)
+      def description(value = nil)
+        if value.nil?
           @description
         else
           @description = value.to_s
         end
       end
 
-      def category(value = UNSET)
-        if value.equal?(UNSET)
+      def category(value = nil)
+        if value.nil?
           @category
         else
           @category = value.to_sym
