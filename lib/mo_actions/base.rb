@@ -14,6 +14,8 @@ module MoActions
         Module.instance_method(:name).bind_call(self)
       end
 
+      # These are Rails-style DSL macros (`name "Import Users"`), not Ruby
+      # attribute writers, so action classes stay concise and match the plan.
       def key(value = nil)
         if value.nil?
           @key || derived_key
