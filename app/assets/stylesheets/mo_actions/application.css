@@ -19,3 +19,38 @@
   font-size: 2rem;
   margin: 0 0 1rem;
 }
+
+.mo-actions-category {
+  margin-top: 2rem;
+}
+
+.mo-actions-category h2 {
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 1.25rem;
+  margin: 0 0 1rem;
+  padding-bottom: 0.5rem;
+}
+
+.mo-actions-list {
+  display: grid;
+  gap: 1rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.mo-actions-list-item {
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  padding: 1rem;
+}
+
+.mo-actions-list-item h3,
+.mo-actions-list-item p {
+  margin: 0;
+}
+
+.mo-actions-list-item p {
+  color: #4b5563;
+  margin-top: 0.5rem;
+}

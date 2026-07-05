@@ -1,5 +1,8 @@
 require "mo_actions/version"
+require "mo_actions/action_not_found"
 require "mo_actions/configuration"
+require "mo_actions/registry"
+require "mo_actions/base"
 require "mo_actions/engine"
 
 module MoActions

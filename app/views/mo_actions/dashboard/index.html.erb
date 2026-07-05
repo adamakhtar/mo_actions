@@ -5,4 +5,21 @@
   <% if current_performer %>
     <p>Signed in as <%= current_performer.name %></p>
   <% end %>
+
+  <% @actions_by_category.each do |category, actions| %>
+    <section class="mo-actions-category">
+      <h2><%= category.to_s.humanize %></h2>
+
+      <ul class="mo-actions-list">
+        <% actions.each do |action| %>
+          <li class="mo-actions-list-item">
+            <h3><%= action.name %></h3>
+            <% if action.description.present? %>
+              <p><%= action.description %></p>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    </section>
+  <% end %>
 </section>
