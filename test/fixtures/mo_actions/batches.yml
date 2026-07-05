@@ -1,0 +1,41 @@
+first_running:
+  execution: running_import
+  position: 1
+  status: running
+  progress: 40
+  checkpoint: {}
+  started_at: <%= 45.minutes.ago %>
+  created_at: <%= 50.minutes.ago %>
+  updated_at: <%= 45.minutes.ago %>
+
+second_pending:
+  execution: running_import
+  position: 2
+  status: pending
+  progress: 0
+  checkpoint: {}
+  created_at: <%= 50.minutes.ago %>
+  updated_at: <%= 50.minutes.ago %>
+
+succeeded:
+  execution: succeeded_import
+  position: 1
+  status: succeeded
+  progress: 100
+  checkpoint: {}
+  started_at: <%= 25.minutes.ago %>
+  finished_at: <%= 5.minutes.ago %>
+  created_at: <%= 30.minutes.ago %>
+  updated_at: <%= 5.minutes.ago %>
+
+failed:
+  execution: failed_import
+  position: 1
+  status: failed
+  progress: 20
+  error_message: boom
+  checkpoint: {}
+  started_at: <%= 25.minutes.ago %>
+  finished_at: <%= 20.minutes.ago %>
+  created_at: <%= 30.minutes.ago %>
+  updated_at: <%= 20.minutes.ago %>

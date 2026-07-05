@@ -1,0 +1,20 @@
+started:
+  execution: running_import
+  batch: first_running
+  level: info
+  message: Started import
+  created_at: <%= 40.minutes.ago %>
+
+debug_line:
+  execution: running_import
+  batch: first_running
+  level: debug
+  message: Loaded first page
+  created_at: <%= 39.minutes.ago %>
+
+failed:
+  execution: failed_import
+  batch: failed
+  level: error
+  message: Import failed
+  created_at: <%= 20.minutes.ago %>

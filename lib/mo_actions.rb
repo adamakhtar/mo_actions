@@ -1,5 +1,6 @@
 require "mo_actions/version"
 require "mo_actions/action_not_found"
+require "mo_actions/invalid_transition"
 require "mo_actions/argument_definition"
 require "mo_actions/types"
 require "mo_actions/types/string"
