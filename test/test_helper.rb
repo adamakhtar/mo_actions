@@ -53,6 +53,10 @@ ActiveRecord::Schema.define do
 end
 
 class ActiveSupport::TestCase
+  self.fixture_paths = [File.expand_path("fixtures", __dir__)]
+  set_fixture_class mo_actions_executions: MoActions::Execution,
+                    mo_actions_batches: MoActions::Batch,
+                    mo_actions_log_entries: MoActions::LogEntry
   fixtures :all
 
   setup do

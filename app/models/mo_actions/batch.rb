@@ -5,7 +5,7 @@ module MoActions
     belongs_to :execution
     has_many :log_entries, dependent: :nullify
 
-    enum status: STATUSES.index_with(&:itself)
+    enum :status, STATUSES.index_with(&:itself)
 
     scope :positioned, -> { order(:position) }
 

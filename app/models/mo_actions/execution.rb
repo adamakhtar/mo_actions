@@ -7,7 +7,7 @@ module MoActions
     has_many :batches, dependent: :destroy
     has_many :log_entries, dependent: :destroy
 
-    enum status: STATUSES.index_with(&:itself)
+    enum :status, STATUSES.index_with(&:itself)
 
     validates :action_key, :status, presence: true
     validates :status, inclusion: { in: STATUSES }
