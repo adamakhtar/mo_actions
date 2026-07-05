@@ -8,13 +8,13 @@ module MoActions
 
     class << self
       def register(klass)
-        raise MissingCategory, "#{klass.name} must declare a category, e.g. category :maintenance" unless klass.category?
+        raise MissingCategory, "#{class_name_for(klass)} must declare a category, e.g. category :maintenance" unless klass.category?
 
         key = klass.key
         existing = actions[key]
 
         if existing && existing != klass
-          raise DuplicateKey, "MoActions key #{key.inspect} is already registered by #{existing.name}; #{klass.name} cannot reuse it"
+          raise DuplicateKey, "MoActions key #{key.inspect} is already registered by #{class_name_for(existing)}; #{class_name_for(klass)} cannot reuse it"
         end
 
         actions_by_class.delete(klass)&.then { |old_key| actions.delete(old_key) }
@@ -55,6 +55,10 @@ module MoActions
 
       def actions_by_class
         @actions_by_class ||= {}
+      end
+
+      def class_name_for(klass)
+        klass.respond_to?(:action_class_name) ? klass.action_class_name : klass.name
       end
     end
   end

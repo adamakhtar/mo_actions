@@ -12,6 +12,10 @@ module MoActions
         @known_actions ||= []
       end
 
+      def action_class_name
+        Module.instance_method(:name).bind_call(self)
+      end
+
       def key(value = UNSET)
         if value.equal?(UNSET)
           @key || derived_key
@@ -53,11 +57,11 @@ module MoActions
       private
 
       def derived_key
-        if self.name.blank?
+        if action_class_name.blank?
           raise ArgumentError, "MoActions action classes must be named to derive a key"
         end
 
-        self.name.demodulize.sub(/Action\z/, "").underscore
+        action_class_name.demodulize.sub(/Action\z/, "").underscore
       end
     end
   end
