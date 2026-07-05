@@ -2,6 +2,10 @@ require_relative "../../test_helper"
 
 module MoActions
   class RegistryTest < ActiveSupport::TestCase
+    setup do
+      Registry.reset!
+    end
+
     teardown do
       remove_test_constants
       rediscover_dummy_actions
@@ -88,7 +92,7 @@ module MoActions
         AlphaBillingAction
         MaintenanceTaskAction
       ].each do |constant_name|
-        Object.remove_const(constant_name) if Object.const_defined?(constant_name, false)
+        Object.send(:remove_const, constant_name) if Object.const_defined?(constant_name, false)
       end
     end
   end
