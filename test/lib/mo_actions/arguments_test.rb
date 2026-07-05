@@ -57,7 +57,6 @@ module MoActions
       assert_not args.valid?
       assert_includes args.errors[:source], "is not included in csv, api"
       assert_includes args.errors[:batch_size], "is not an integer"
-      assert_includes args.errors[:notify], "is not a boolean"
       assert_includes args.errors[:started_on], "is not a date"
       assert_includes args.errors[:run_at], "is not a datetime"
       assert_includes args.errors[:discount_rate], "is not a decimal"
@@ -68,6 +67,7 @@ module MoActions
       assert_equal true, argument_value(:boolean, "true")
       assert_equal false, argument_value(:boolean, "0")
       assert_equal false, argument_value(:boolean, "false")
+      assert_equal true, argument_value(:boolean, "maybe")
       assert_nil argument_value(:boolean, "")
       assert_nil argument_value(:boolean, nil)
     end

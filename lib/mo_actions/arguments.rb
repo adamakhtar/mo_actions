@@ -1,10 +1,14 @@
 module MoActions
   class Arguments
+    RAILS_VALIDATORS = {
+      presence: ActiveModel::Validations::PresenceValidator,
+      numericality: ActiveModel::Validations::NumericalityValidator,
+      inclusion: ActiveModel::Validations::InclusionValidator
+    }.freeze
+
     attr_reader :action_class, :errors
 
-    def self.build(action_class, raw_hash)
-      new(action_class, raw_hash || {}).tap(&:validate)
-    end
+    def self.build(action_class, raw_hash) = new(action_class, raw_hash || {}).tap(&:validate)
 
     def initialize(action_class, raw_hash)
       @action_class = action_class
@@ -14,13 +18,9 @@ module MoActions
       define_readers
     end
 
-    def [](name)
-      @values[name.to_sym]
-    end
+    def [](name) = @values[name.to_sym]
 
-    def valid?
-      errors.empty?
-    end
+    def valid? = errors.empty?
 
     def validate
       action_class.argument_definitions.each { |definition| cast_and_validate(definition) }
@@ -31,17 +31,15 @@ module MoActions
       @values.transform_values { |value| serialize(value) }
     end
 
-    def read_attribute_for_validation(attribute)
-      self[attribute]
-    end
+    def read_attribute_for_validation(attribute) = self[attribute]
 
-    def self.human_attribute_name(attribute, *)
-      attribute.to_s
-    end
+    def self.human_attribute_name(attribute, *) = attribute.to_s
 
-    def self.lookup_ancestors
-      [self]
-    end
+    def self.model_name = ActiveModel::Name.new(self, nil, "Arguments")
+
+    def model_name = self.class.model_name
+
+    def self.lookup_ancestors = [self]
 
     private
 
@@ -68,58 +66,34 @@ module MoActions
       @values[definition.name] = result.value if error_key == definition.name
 
       add_error(error_key, result.error) unless result.valid?
-      validate_required(definition, error_key, result.value)
+      run_validator(:presence, error_key, result.value, {}) if definition.required?
       validate_value(definition, error_key, result.value) if result.valid?
       result.value
     end
 
     def cast_array(definition, raw)
-      values = normalize_array(raw)
+      values = raw.nil? || raw == "" ? [] : Array(raw)
       @values[definition.name] = values.each_with_index.map do |item, index|
         cast_scalar(definition, :"#{definition.name}[#{index}]", item)
       end
 
-      validate_required(definition, definition.name, @values[definition.name])
+      run_validator(:presence, definition.name, @values[definition.name], {}) if definition.required?
       validate_array(definition)
     end
 
-    def normalize_array(raw)
-      return [] if raw.nil? || raw == ""
-
-      Array(raw)
-    end
-
-    def validate_required(definition, error_key, value)
-      add_error(error_key, "can't be blank") if definition.required? && blank_value?(value)
-    end
-
     def validate_value(definition, error_key, value)
+      options = definition.validation_options
+      run_validator(:presence, error_key, value, {}) if options[:presence]
       return if blank_value?(value)
 
-      options = definition.validation_options
-      validate_presence(error_key, value) if options[:presence]
-      validate_numericality(error_key, value, options[:numericality]) if options[:numericality]
-      validate_inclusion(error_key, value, options[:inclusion]) if options[:inclusion]
+      run_validator(:numericality, error_key, value, options[:numericality]) if options[:numericality]
+      run_validator(:inclusion, error_key, value, options[:inclusion]) if options[:inclusion]
       validate_custom(error_key, value, options[:validate] || options[:custom])
     end
 
-    def validate_presence(error_key, value)
-      add_error(error_key, "can't be blank") if blank_value?(value)
-    end
-
-    def validate_numericality(error_key, value, options)
-      return add_error(error_key, "is not a number") unless value.is_a?(Numeric)
-
-      checks = options == true ? {} : options
-      add_error(error_key, "must be greater than #{checks[:greater_than]}") if checks[:greater_than] && value <= checks[:greater_than]
-      add_error(error_key, "must be greater than or equal to #{checks[:greater_than_or_equal_to]}") if checks[:greater_than_or_equal_to] && value < checks[:greater_than_or_equal_to]
-      add_error(error_key, "must be less than #{checks[:less_than]}") if checks[:less_than] && value >= checks[:less_than]
-      add_error(error_key, "must be less than or equal to #{checks[:less_than_or_equal_to]}") if checks[:less_than_or_equal_to] && value > checks[:less_than_or_equal_to]
-    end
-
-    def validate_inclusion(error_key, value, options)
-      allowed = options[:in] || options[:within]
-      add_error(error_key, "is not included in #{allowed.join(', ')}") unless allowed.include?(value)
+    def run_validator(kind, error_key, value, options)
+      validator_options = options == true ? {} : options
+      RAILS_VALIDATORS.fetch(kind).new(validator_options.merge(attributes: [error_key])).validate_each(self, error_key, value)
     end
 
     def validate_custom(error_key, value, rule)
@@ -142,9 +116,7 @@ module MoActions
       value.respond_to?(:empty?) ? value.empty? : value.nil?
     end
 
-    def add_error(attribute, message)
-      errors.add(attribute, message)
-    end
+    def add_error(attribute, message) = errors.add(attribute, message)
 
     def serialize(value)
       case value
