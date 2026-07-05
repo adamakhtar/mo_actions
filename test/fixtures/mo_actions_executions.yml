@@ -1,0 +1,112 @@
+draft_import:
+  action_key: import_users
+  status: draft
+  performer: admin (User)
+  arguments:
+    user_ids:
+      - 1
+      - 2
+  preflight_results: {}
+  progress: 0
+  created_at: <%= 2.hours.ago %>
+  updated_at: <%= 2.hours.ago %>
+
+ready_import:
+  action_key: import_users
+  status: ready
+  performer: admin (User)
+  arguments:
+    user_ids:
+      - 3
+  preflight_results:
+    checks:
+      - ok
+  progress: 0
+  created_at: <%= 90.minutes.ago %>
+  updated_at: <%= 90.minutes.ago %>
+
+queued_import:
+  action_key: import_users
+  status: queued
+  performer: admin (User)
+  arguments:
+    user_ids:
+      - 4
+  preflight_results: {}
+  progress: 0
+  queued_at: <%= 1.hour.ago %>
+  created_at: <%= 1.hour.ago %>
+  updated_at: <%= 1.hour.ago %>
+
+running_import:
+  action_key: import_users
+  status: running
+  performer: admin (User)
+  arguments:
+    user_ids:
+      - 5
+  preflight_results: {}
+  progress: 40
+  queued_at: <%= 50.minutes.ago %>
+  started_at: <%= 45.minutes.ago %>
+  created_at: <%= 50.minutes.ago %>
+  updated_at: <%= 45.minutes.ago %>
+
+paused_import:
+  action_key: import_users
+  status: paused
+  performer: admin (User)
+  arguments:
+    user_ids:
+      - 6
+  preflight_results: {}
+  progress: 60
+  queued_at: <%= 40.minutes.ago %>
+  started_at: <%= 35.minutes.ago %>
+  created_at: <%= 40.minutes.ago %>
+  updated_at: <%= 30.minutes.ago %>
+
+succeeded_import:
+  action_key: import_users
+  status: succeeded
+  performer: admin (User)
+  arguments:
+    user_ids:
+      - 7
+  preflight_results: {}
+  progress: 100
+  queued_at: <%= 30.minutes.ago %>
+  started_at: <%= 25.minutes.ago %>
+  finished_at: <%= 5.minutes.ago %>
+  created_at: <%= 30.minutes.ago %>
+  updated_at: <%= 5.minutes.ago %>
+
+failed_import:
+  action_key: import_users
+  status: failed
+  performer: admin (User)
+  arguments:
+    user_ids:
+      - 8
+  preflight_results: {}
+  error_message: boom
+  progress: 20
+  queued_at: <%= 30.minutes.ago %>
+  started_at: <%= 25.minutes.ago %>
+  finished_at: <%= 20.minutes.ago %>
+  created_at: <%= 30.minutes.ago %>
+  updated_at: <%= 20.minutes.ago %>
+
+cancelled_import:
+  action_key: import_users
+  status: cancelled
+  performer: admin (User)
+  arguments:
+    user_ids:
+      - 9
+  preflight_results: {}
+  progress: 0
+  queued_at: <%= 30.minutes.ago %>
+  finished_at: <%= 20.minutes.ago %>
+  created_at: <%= 30.minutes.ago %>
+  updated_at: <%= 20.minutes.ago %>
