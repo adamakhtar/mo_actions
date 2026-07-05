@@ -1,0 +1,30 @@
+<section class="mo-actions-draft">
+  <%= link_to "Back to actions", actions_path, class: "mo-actions-back-link" %>
+
+  <div class="mo-actions-header">
+    <div>
+      <p class="mo-actions-eyebrow">Draft execution</p>
+      <h1><%= @action_class.name %></h1>
+      <% if @action_class.description.present? %>
+        <p class="mo-actions-lede"><%= @action_class.description %></p>
+      <% end %>
+    </div>
+
+    <%= button_to "Abandon draft", execution_path(@execution), method: :delete, class: "mo-actions-button mo-actions-button--danger", form: { data: { turbo_confirm: "Abandon this draft?" } } %>
+  </div>
+
+  <% if notice.present? %>
+    <p class="mo-actions-notice"><%= notice %></p>
+  <% end %>
+
+  <%= form_with model: @execution, url: execution_path(@execution), method: :patch, class: "mo-actions-form" do |form| %>
+    <% @action_class.argument_definitions.each do |definition| %>
+      <%= render_argument_field(form: form, definition: definition, arguments: @arguments) %>
+    <% end %>
+
+    <div class="mo-actions-form-actions">
+      <%= form.submit "Save draft", class: "mo-actions-button" %>
+      <button type="button" class="mo-actions-button mo-actions-button--secondary" disabled>Preflight arrives in phase 6</button>
+    </div>
+  <% end %>
+</section>

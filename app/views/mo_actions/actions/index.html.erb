@@ -1,0 +1,37 @@
+<section class="mo-actions-dashboard">
+  <div class="mo-actions-header">
+    <div>
+      <p class="mo-actions-eyebrow">Dashboard</p>
+      <h1>Mo Actions</h1>
+    </div>
+
+    <% if current_performer %>
+      <p class="mo-actions-signed-in">Signed in as <%= current_performer.name %></p>
+    <% end %>
+  </div>
+
+  <% if notice.present? %>
+    <p class="mo-actions-notice"><%= notice %></p>
+  <% end %>
+
+  <% @actions_by_category.each do |category, actions| %>
+    <section class="mo-actions-category">
+      <h2><%= category.to_s.humanize %></h2>
+
+      <ul class="mo-actions-list">
+        <% actions.each do |action| %>
+          <li class="mo-actions-list-item">
+            <div>
+              <h3><%= action.name %></h3>
+              <% if action.description.present? %>
+                <p><%= action.description %></p>
+              <% end %>
+            </div>
+
+            <%= button_to "Run", executions_path(action_key: action.key), method: :post, class: "mo-actions-button" %>
+          </li>
+        <% end %>
+      </ul>
+    </section>
+  <% end %>
+</section>

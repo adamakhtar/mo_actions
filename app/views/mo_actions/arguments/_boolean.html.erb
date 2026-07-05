@@ -1,0 +1,13 @@
+<% field = capture do %>
+  <%= hidden_field_tag argument_input_name(definition), "0" %>
+  <label class="mo-actions-checkbox">
+    <%= check_box_tag argument_input_name(definition), "1", ActiveModel::Type::Boolean.new.cast(argument_value(arguments, definition)), id: argument_input_id(definition) %>
+    <span>Yes</span>
+  </label>
+<% end %>
+
+<%= render "mo_actions/arguments/field_shell",
+           definition: definition,
+           errors: argument_errors(arguments, definition),
+           label: tag.span(definition.name.to_s.humanize),
+           field: field %>

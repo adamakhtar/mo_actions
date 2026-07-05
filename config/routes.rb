@@ -1,3 +1,6 @@
 MoActions::Engine.routes.draw do
-  root "dashboard#index"
+  root "actions#index"
+
+  resources :actions, only: :index
+  resources :executions, only: [:create, :edit, :update, :destroy]
 end

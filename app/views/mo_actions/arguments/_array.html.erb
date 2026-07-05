@@ -1,0 +1,35 @@
+<% values = Array(argument_value(arguments, definition)) %>
+<% errors = argument_errors(arguments, definition) %>
+
+<div class="mo-actions-field <%= "mo-actions-field--error" if errors.present? %>" data-controller="array-field">
+  <div class="mo-actions-field-label">
+    <span><%= definition.name.to_s.humanize %></span>
+    <%= argument_required_label(definition) %>
+  </div>
+
+  <% if definition.description.present? %>
+    <p class="mo-actions-help"><%= definition.description %></p>
+  <% end %>
+
+  <%= hidden_field_tag argument_input_name(definition), "", disabled: values.any?, data: { array_field_target: "emptyMarker" } %>
+
+  <div class="mo-actions-array-rows" data-array-field-target="rows">
+    <% values.each_with_index do |value, index| %>
+      <%= render "mo_actions/arguments/array_row", definition: definition, arguments: arguments, value: value, index: index %>
+    <% end %>
+  </div>
+
+  <template data-array-field-target="template">
+    <%= render "mo_actions/arguments/array_row", definition: definition, arguments: arguments, value: nil, index: nil %>
+  </template>
+
+  <button type="button" class="mo-actions-button mo-actions-button--secondary" data-action="array-field#add">Add <%= definition.name.to_s.humanize.singularize.downcase %></button>
+
+  <% if errors.present? %>
+    <ul class="mo-actions-errors">
+      <% errors.each do |message| %>
+        <li><%= message %></li>
+      <% end %>
+    </ul>
+  <% end %>
+</div>

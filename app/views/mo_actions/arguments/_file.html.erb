@@ -1,0 +1,5 @@
+<%= render "mo_actions/arguments/field_shell",
+           definition: definition,
+           errors: argument_errors(arguments, definition),
+           label: label_tag(argument_input_id(definition), definition.name.to_s.humanize),
+           field: text_field_tag(argument_input_name(definition), nil, id: argument_input_id(definition), disabled: true, placeholder: "File uploads arrive in phase 7", class: "mo-actions-input") %>

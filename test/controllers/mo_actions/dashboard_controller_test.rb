@@ -20,6 +20,8 @@ module MoActions
       assert_select "h3", "Send Invoice Reminders"
       assert_select "h2", "Maintenance"
       assert_select "h3", "Purge Stale Sessions"
+      assert_select "form[action='/mo_actions/executions']", 3
+      assert_select "button", "Run"
     end
 
     test "unauthenticated requests are rejected" do

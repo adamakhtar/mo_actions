@@ -1,9 +1,18 @@
 .mo-actions-shell {
+  background: #fff;
   color: #1f2937;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   margin: 3rem auto;
   max-width: 64rem;
   padding: 0 1.5rem;
+}
+
+.mo-actions-header {
+  align-items: flex-start;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
 }
 
 .mo-actions-eyebrow {
@@ -15,9 +24,25 @@
   text-transform: uppercase;
 }
 
-.mo-actions-dashboard h1 {
+.mo-actions-dashboard h1,
+.mo-actions-draft h1 {
   font-size: 2rem;
-  margin: 0 0 1rem;
+  margin: 0;
+}
+
+.mo-actions-lede,
+.mo-actions-signed-in {
+  color: #4b5563;
+  margin: 0.5rem 0 0;
+}
+
+.mo-actions-notice {
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 0.5rem;
+  color: #065f46;
+  margin: 1rem 0;
+  padding: 0.75rem 1rem;
 }
 
 .mo-actions-category {
@@ -40,8 +65,12 @@
 }
 
 .mo-actions-list-item {
+  align-items: center;
   border: 1px solid #e5e7eb;
   border-radius: 0.5rem;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
   padding: 1rem;
 }
 
@@ -53,4 +82,118 @@
 .mo-actions-list-item p {
   color: #4b5563;
   margin-top: 0.5rem;
+}
+
+.mo-actions-button {
+  background: #111827;
+  border: 1px solid #111827;
+  border-radius: 0.375rem;
+  color: #fff;
+  cursor: pointer;
+  display: inline-block;
+  font: inherit;
+  font-weight: 600;
+  padding: 0.55rem 0.85rem;
+  text-decoration: none;
+}
+
+.mo-actions-button:hover {
+  background: #374151;
+}
+
+.mo-actions-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.mo-actions-button--secondary {
+  background: #fff;
+  border-color: #d1d5db;
+  color: #374151;
+}
+
+.mo-actions-button--danger {
+  background: #b91c1c;
+  border-color: #b91c1c;
+}
+
+.mo-actions-back-link {
+  color: #374151;
+  display: inline-block;
+  margin-bottom: 1rem;
+}
+
+.mo-actions-form {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.mo-actions-field {
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  padding: 1rem;
+}
+
+.mo-actions-field--error {
+  border-color: #fca5a5;
+}
+
+.mo-actions-field-label {
+  align-items: center;
+  display: flex;
+  gap: 0.5rem;
+  font-weight: 700;
+}
+
+.mo-actions-required {
+  color: #6b7280;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.mo-actions-help {
+  color: #6b7280;
+  margin: 0.35rem 0 0.75rem;
+}
+
+.mo-actions-input {
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  box-sizing: border-box;
+  font: inherit;
+  padding: 0.55rem 0.7rem;
+  width: 100%;
+}
+
+.mo-actions-checkbox {
+  align-items: center;
+  display: inline-flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.mo-actions-errors {
+  color: #991b1b;
+  margin: 0.5rem 0 0;
+  padding-left: 1.25rem;
+}
+
+.mo-actions-array-rows {
+  display: grid;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.mo-actions-array-row {
+  align-items: flex-start;
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: 1fr auto;
+}
+
+.mo-actions-array-controls,
+.mo-actions-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }

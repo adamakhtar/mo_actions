@@ -1,0 +1,20 @@
+<div class="mo-actions-field <%= "mo-actions-field--error" if errors.present? %>">
+  <div class="mo-actions-field-label">
+    <%= label %>
+    <%= argument_required_label(definition) %>
+  </div>
+
+  <% if definition.description.present? %>
+    <p class="mo-actions-help"><%= definition.description %></p>
+  <% end %>
+
+  <%= field %>
+
+  <% if errors.present? %>
+    <ul class="mo-actions-errors">
+      <% errors.each do |message| %>
+        <li><%= message %></li>
+      <% end %>
+    </ul>
+  <% end %>
+</div>

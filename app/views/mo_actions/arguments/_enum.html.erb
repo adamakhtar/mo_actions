@@ -1,0 +1,7 @@
+<% options = options_for_select(definition.type_options.fetch(:values).map { |value| [value.to_s.humanize, value] }, argument_value(arguments, definition)) %>
+
+<%= render "mo_actions/arguments/field_shell",
+           definition: definition,
+           errors: argument_errors(arguments, definition),
+           label: label_tag(argument_input_id(definition), definition.name.to_s.humanize),
+           field: select_tag(argument_input_name(definition), options, id: argument_input_id(definition), include_blank: !definition.required?, required: definition.required?, class: "mo-actions-input") %>
