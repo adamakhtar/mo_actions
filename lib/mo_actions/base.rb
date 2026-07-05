@@ -10,6 +10,10 @@ module MoActions
         @known_actions ||= []
       end
 
+      def argument_definitions
+        @argument_definitions ||= []
+      end
+
       def action_class_name
         Module.instance_method(:name).bind_call(self)
       end
@@ -52,6 +56,26 @@ module MoActions
 
       def category?
         @category.present?
+      end
+
+      def argument(name, type, **options)
+        type_options = options.except(:array, :required, :default, :description, :validates, :array_validates)
+        default_provided = options.key?(:default)
+        required = options.key?(:required) ? options[:required] : !default_provided
+
+        argument_definitions.reject! { |definition| definition.name == name.to_sym }
+        argument_definitions << ArgumentDefinition.new(
+          name: name,
+          type: type,
+          array: options.fetch(:array, false),
+          required: required,
+          default: options[:default],
+          default_provided: default_provided,
+          description: options[:description],
+          validation_options: options.fetch(:validates, {}),
+          array_validation_options: options.fetch(:array_validates, {}),
+          type_options: type_options
+        )
       end
 
       private
