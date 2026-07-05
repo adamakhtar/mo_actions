@@ -1,6 +1,8 @@
 module MoActions
   class ExecutionsController < ApplicationController
-    before_action :set_execution, only: [:edit, :update, :destroy]
+    before_action :set_editable_execution, only: [:edit, :update]
+    before_action :set_ready_execution, only: :show
+    before_action :set_draft_execution, only: :destroy
 
     def create
       execution = Execution.create!(
@@ -13,10 +15,16 @@ module MoActions
     end
 
     def edit
+      @execution.return_to_draft! if @execution.ready?
       prepare_form
     end
 
+    def show
+      @arguments = @execution.arguments_object
+    end
+
     def update
+      @execution.return_to_draft! if @execution.ready?
       prepare_form(argument_params)
       @execution.arguments = @arguments.to_h if @arguments.castable?
 
@@ -38,17 +46,29 @@ module MoActions
       @action_class ||= Registry.find(params.require(:action_key))
     end
 
-    def set_execution
+    def set_editable_execution
+      @execution = Execution.where(status: %w[draft ready]).find_by!(id: params[:id], performer: current_performer)
+      @action_class = @execution.action_class
+    end
+
+    def set_ready_execution
+      @execution = Execution.ready.find_by!(id: params[:id], performer: current_performer)
+      @action_class = @execution.action_class
+    end
+
+    def set_draft_execution
       @execution = Execution.draft.find_by!(id: params[:id], performer: current_performer)
       @action_class = @execution.action_class
     end
 
     def prepare_form(raw_arguments = @execution.arguments)
       @arguments = Arguments.build(@action_class, raw_arguments)
+      @preflight_results ||= (@execution.preflight_results || {}).symbolize_keys
     end
 
     def argument_params
-      params.fetch(:execution, {}).fetch(:arguments, {}).permit!
+      arguments = params.fetch(:execution, {}).fetch(:arguments, {})
+      arguments.respond_to?(:permit!) ? arguments.permit! : ActionController::Parameters.new(arguments).permit!
     end
   end
 end

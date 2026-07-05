@@ -17,14 +17,40 @@
     <p class="mo-actions-notice"><%= notice %></p>
   <% end %>
 
-  <%= form_with model: @execution, url: execution_path(@execution), method: :patch, class: "mo-actions-form" do |form| %>
+  <% if @preflight_results&.fetch(:errors, []).present? %>
+    <section class="mo-actions-blocking-errors">
+      <h2>Preflight blocked this execution</h2>
+      <ul>
+        <% @preflight_results.fetch(:errors).each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </section>
+  <% end %>
+
+  <% if @arguments.errors.any? %>
+    <section class="mo-actions-error-summary">
+      <h2>Fix these fields before preflight</h2>
+      <ul>
+        <% @arguments.errors.each do |error| %>
+          <li>
+            <a href="#<%= argument_error_anchor(error.attribute) %>">
+              <%= argument_error_label(error.attribute) %> <%= error.message %>
+            </a>
+          </li>
+        <% end %>
+      </ul>
+    </section>
+  <% end %>
+
+  <%= form_with model: @execution, url: execution_preflight_path(@execution), method: :post, class: "mo-actions-form" do |form| %>
     <% @action_class.argument_definitions.each do |definition| %>
       <%= render_argument_field(form: form, definition: definition, arguments: @arguments) %>
     <% end %>
 
     <div class="mo-actions-form-actions">
-      <%= form.submit "Save draft", class: "mo-actions-button" %>
-      <button type="button" class="mo-actions-button mo-actions-button--secondary" disabled>Preflight arrives in phase 6</button>
+      <%= form.button "Save draft", name: "_method", value: "patch", formaction: execution_path(@execution), class: "mo-actions-button mo-actions-button--secondary" %>
+      <%= form.submit "Run preflight", class: "mo-actions-button" %>
     </div>
   <% end %>
 </section>

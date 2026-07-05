@@ -25,7 +25,8 @@
 }
 
 .mo-actions-dashboard h1,
-.mo-actions-draft h1 {
+.mo-actions-draft h1,
+.mo-actions-review h1 {
   font-size: 2rem;
   margin: 0;
 }
@@ -178,6 +179,41 @@
   padding-left: 1.25rem;
 }
 
+.mo-actions-blocking-errors,
+.mo-actions-error-summary {
+  border-radius: 0.5rem;
+  margin: 1rem 0;
+  padding: 1rem;
+}
+
+.mo-actions-blocking-errors {
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  color: #7f1d1d;
+}
+
+.mo-actions-error-summary {
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+}
+
+.mo-actions-blocking-errors h2,
+.mo-actions-error-summary h2,
+.mo-actions-review-card h2 {
+  font-size: 1.125rem;
+  margin: 0 0 0.75rem;
+}
+
+.mo-actions-blocking-errors ul,
+.mo-actions-error-summary ul {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.mo-actions-error-summary a {
+  color: #92400e;
+}
+
 .mo-actions-array-rows {
   display: grid;
   gap: 0.75rem;
@@ -196,4 +232,43 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
+}
+
+.mo-actions-review-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+  padding: 1rem;
+}
+
+.mo-actions-argument-summary {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+}
+
+.mo-actions-argument-summary div {
+  border-top: 1px solid #f3f4f6;
+  display: grid;
+  gap: 0.25rem;
+  padding-top: 0.75rem;
+}
+
+.mo-actions-argument-summary dt {
+  color: #6b7280;
+  font-weight: 700;
+}
+
+.mo-actions-argument-summary dd {
+  margin: 0;
+}
+
+.mo-actions-preflight-results {
+  color: #065f46;
+  margin: 0.5rem 0 0;
+  padding-left: 1.25rem;
+}
+
+.mo-actions-preflight-results--warnings {
+  color: #92400e;
 }

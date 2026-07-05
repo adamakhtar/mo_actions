@@ -1,4 +1,4 @@
-<div class="mo-actions-field <%= "mo-actions-field--error" if errors.present? %>">
+<div id="<%= argument_field_id(definition) %>" class="mo-actions-field <%= "mo-actions-field--error" if errors.present? %>">
   <div class="mo-actions-field-label">
     <%= label %>
     <%= argument_required_label(definition) %>

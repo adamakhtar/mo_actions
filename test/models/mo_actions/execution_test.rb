@@ -14,10 +14,19 @@ module MoActions
       assert_predicate execution, :ready?
     end
 
-    test "failed preflight returns to draft and clears preflight results" do
+    test "failed preflight returns to draft and stores preflight results" do
       execution = new_execution(status: "preflighting", preflight_results: { "blocking" => ["bad input"] })
 
-      execution.fail_preflight!
+      execution.fail_preflight!({ errors: ["bad input"], infos: [], warnings: [] })
+
+      assert_predicate execution, :draft?
+      assert_equal ["bad input"], execution.preflight_results["errors"]
+    end
+
+    test "returning to draft clears preflight results" do
+      execution = new_execution(status: "ready", preflight_results: { "infos" => ["ok"] })
+
+      execution.return_to_draft!
 
       assert_predicate execution, :draft?
       assert_nil execution.preflight_results

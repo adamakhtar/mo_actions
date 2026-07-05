@@ -29,6 +29,7 @@ module MoActions
       assert_select "[data-controller='array-field']"
       assert_select "button", "Add user id"
       assert_select "input[disabled][placeholder='File uploads arrive in phase 7']"
+      assert_select "input[type=submit][value='Run preflight']"
     end
 
     test "updating a draft persists typed scalar values" do
@@ -133,6 +134,77 @@ module MoActions
       end
 
       assert_response :not_found
+    end
+
+    test "schema validation errors link back to argument fields during preflight" do
+      execution = mo_actions_executions(:draft_import)
+
+      post "/mo_actions/executions/#{execution.id}/preflight", params: {
+        execution: {
+          arguments: {
+            batch_size: "0",
+            user_ids: ""
+          }
+        }
+      }
+
+      assert_response :unprocessable_entity
+      assert_select ".mo-actions-error-summary a[href='#execution_arguments_batch_size_field']", /must be greater than 0/
+      assert_select ".mo-actions-error-summary a[href='#execution_arguments_user_ids_field']", /must have at least 1 item/
+      assert_predicate execution.reload, :draft?
+    end
+
+    test "operator can correct failed preflight and reach review screen" do
+      execution = mo_actions_executions(:draft_import)
+
+      post "/mo_actions/executions/#{execution.id}/preflight", params: {
+        execution: {
+          arguments: {
+            user_ids: ["13"]
+          }
+        }
+      }
+
+      assert_response :unprocessable_entity
+      assert_select ".mo-actions-blocking-errors li", "User 13 cannot be imported"
+      assert_predicate execution.reload, :draft?
+
+      post "/mo_actions/executions/#{execution.id}/preflight", params: {
+        execution: {
+          arguments: {
+            batch_size: "300",
+            user_ids: ["1", "2"]
+          }
+        }
+      }
+
+      assert_redirected_to "/mo_actions/executions/#{execution.id}"
+      follow_redirect!
+      assert_response :success
+      assert_select "p.mo-actions-notice", "Preflight passed."
+      assert_select "h1", "Import Users"
+      assert_select ".mo-actions-argument-summary dd", "1, 2"
+      assert_select ".mo-actions-preflight-results li", "Will import 2 user(s) from csv"
+      assert_select ".mo-actions-preflight-results--warnings li", "Large batches may take longer to process"
+      assert_select "button[disabled]", "Execute arrives in phase 8"
+    end
+
+    test "updating a ready execution returns it to draft and clears preflight results" do
+      execution = mo_actions_executions(:ready_import)
+
+      patch "/mo_actions/executions/#{execution.id}", params: {
+        execution: {
+          arguments: {
+            user_ids: ["99"]
+          }
+        }
+      }
+
+      assert_redirected_to "/mo_actions/executions/#{execution.id}/edit"
+      execution.reload
+      assert_predicate execution, :draft?
+      assert_nil execution.preflight_results
+      assert_equal [99], execution.arguments["user_ids"]
     end
 
     test "performer cannot edit another performer's draft" do

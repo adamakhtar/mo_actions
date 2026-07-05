@@ -18,9 +18,11 @@ module MoActions
 
     def start_preflight! = transition_to!("preflighting", from: "draft")
 
-    def pass_preflight! = transition_to!("ready", from: "preflighting")
+    def pass_preflight!(results = preflight_results) = transition_to!("ready", from: "preflighting", preflight_results: results)
 
-    def fail_preflight! = transition_to!("draft", from: "preflighting", preflight_results: nil)
+    def fail_preflight!(results = preflight_results) = transition_to!("draft", from: "preflighting", preflight_results: results)
+
+    def return_to_draft! = transition_to!("draft", from: "ready", preflight_results: nil)
 
     def queue! = transition_to!("queued", from: "ready", queued_at: Time.current)
 

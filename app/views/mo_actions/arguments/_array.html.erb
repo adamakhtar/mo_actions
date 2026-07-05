@@ -1,7 +1,7 @@
 <% values = Array(argument_value(arguments, definition)) %>
 <% errors = argument_errors(arguments, definition) %>
 
-<div class="mo-actions-field <%= "mo-actions-field--error" if errors.present? %>" data-controller="array-field">
+<div id="<%= argument_field_id(definition) %>" class="mo-actions-field <%= "mo-actions-field--error" if errors.present? %>" data-controller="array-field">
   <div class="mo-actions-field-label">
     <span><%= definition.name.to_s.humanize %></span>
     <%= argument_required_label(definition) %>
@@ -11,7 +11,7 @@
     <p class="mo-actions-help"><%= definition.description %></p>
   <% end %>
 
-  <%= hidden_field_tag argument_input_name(definition), "", disabled: values.any?, data: { array_field_target: "emptyMarker" } %>
+  <%= hidden_field_tag argument_input_name(definition), "", id: argument_input_id(definition), disabled: values.any?, data: { array_field_target: "emptyMarker" } %>
 
   <div class="mo-actions-array-rows" data-array-field-target="rows">
     <% values.each_with_index do |value, index| %>

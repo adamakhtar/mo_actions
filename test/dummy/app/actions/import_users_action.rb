@@ -12,4 +12,10 @@ class ImportUsersAction < MoActions::Base
   argument :user_ids, :integer, array: true, required: true,
            array_validates: { min_items: 1, max_items: 500, unique: true }
   argument :mapping_file, :file, required: false
+
+  def preflight(args, check)
+    check.error "User 13 cannot be imported" if args.user_ids.include?(13)
+    check.warn "Large batches may take longer to process" if args.batch_size > 250
+    check.info "Will import #{args.user_ids.size} user(s) from #{args.source}"
+  end
 end

@@ -88,5 +88,8 @@ module MoActions
         action_class_name.demodulize.sub(/Action\z/, "").underscore
       end
     end
+
+    def preflight(_args, _check)
+    end
   end
 end

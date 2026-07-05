@@ -1,0 +1,57 @@
+<section class="mo-actions-review">
+  <%= link_to "Back to edit", edit_execution_path(@execution), class: "mo-actions-back-link" %>
+
+  <div class="mo-actions-header">
+    <div>
+      <p class="mo-actions-eyebrow">Review execution</p>
+      <h1><%= @action_class.name %></h1>
+      <% if @action_class.description.present? %>
+        <p class="mo-actions-lede"><%= @action_class.description %></p>
+      <% end %>
+    </div>
+  </div>
+
+  <% if notice.present? %>
+    <p class="mo-actions-notice"><%= notice %></p>
+  <% end %>
+
+  <section class="mo-actions-review-card">
+    <h2>Arguments</h2>
+    <dl class="mo-actions-argument-summary">
+      <% @action_class.argument_definitions.each do |definition| %>
+        <div>
+          <dt><%= definition.name.to_s.humanize %></dt>
+          <dd><%= display_argument_value(@arguments, definition) %></dd>
+        </div>
+      <% end %>
+    </dl>
+  </section>
+
+  <% results = (@execution.preflight_results || {}).symbolize_keys %>
+  <% if results.fetch(:infos, []).present? || results.fetch(:warnings, []).present? %>
+    <section class="mo-actions-review-card">
+      <h2>Preflight results</h2>
+
+      <% if results.fetch(:warnings, []).present? %>
+        <ul class="mo-actions-preflight-results mo-actions-preflight-results--warnings">
+          <% results.fetch(:warnings).each do |message| %>
+            <li><%= message %></li>
+          <% end %>
+        </ul>
+      <% end %>
+
+      <% if results.fetch(:infos, []).present? %>
+        <ul class="mo-actions-preflight-results">
+          <% results.fetch(:infos).each do |message| %>
+            <li><%= message %></li>
+          <% end %>
+        </ul>
+      <% end %>
+    </section>
+  <% end %>
+
+  <div class="mo-actions-form-actions">
+    <button type="button" class="mo-actions-button" disabled>Execute arrives in phase 8</button>
+    <%= link_to "Back to edit", edit_execution_path(@execution), class: "mo-actions-button mo-actions-button--secondary" %>
+  </div>
+</section>
