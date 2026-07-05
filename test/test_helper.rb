@@ -14,5 +14,13 @@ end
 class ActiveSupport::TestCase
   setup do
     MoActions.reset_config!
+    rediscover_dummy_actions
+  end
+
+  private
+
+  def rediscover_dummy_actions
+    MoActions::Registry.reset!
+    Dir[Rails.root.join("app/actions/**/*_action.rb")].sort.each { |file| load file }
   end
 end
