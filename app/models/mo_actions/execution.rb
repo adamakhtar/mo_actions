@@ -14,7 +14,6 @@ module MoActions
     validates :progress, numericality: { only_integer: true, greater_than_or_equal_to: 0, less_than_or_equal_to: 100 }
     validate :arguments_writable_only_in_draft
 
-    before_validation :clamp_progress
     before_save :clear_preflight_results_after_draft_argument_edit
 
     def start_preflight! = transition_to!("preflighting", from: "draft")
@@ -76,10 +75,5 @@ module MoActions
       self.preflight_results = nil if draft? && will_save_change_to_arguments?
     end
 
-    def clamp_progress
-      return if progress.nil?
-
-      self.progress = progress.clamp(0, 100)
-    end
   end
 end

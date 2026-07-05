@@ -46,12 +46,20 @@ module MoActions
       assert_includes duplicate.errors[:position], "has already been taken"
     end
 
-    test "positioned scope orders by position and progress is clamped" do
+    test "positioned scope orders by position" do
       first, second = mo_actions_executions(:running_import).batches.positioned
-      batch = new_batch(position: 10, progress: -10)
 
       assert_equal [1, 2], [first.position, second.position]
-      assert_equal 0, batch.progress
+    end
+
+    test "progress outside 0 to 100 is invalid" do
+      too_high = Batch.new(execution: mo_actions_executions(:ready_import), position: 10, progress: 101)
+      too_low = Batch.new(execution: mo_actions_executions(:ready_import), position: 11, progress: -1)
+
+      assert_not too_high.valid?
+      assert_not too_low.valid?
+      assert_includes too_high.errors[:progress], "must be less than or equal to 100"
+      assert_includes too_low.errors[:progress], "must be greater than or equal to 0"
     end
 
     private

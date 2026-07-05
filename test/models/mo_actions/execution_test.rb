@@ -127,11 +127,20 @@ module MoActions
       assert_equal [1, 2], object.user_ids
     end
 
-    test "action class is resolved through registry and progress is clamped" do
-      execution = new_execution(progress: 150)
+    test "action class is resolved through registry" do
+      execution = new_execution
 
       assert_equal ImportUsersAction, execution.action_class
-      assert_equal 100, execution.progress
+    end
+
+    test "progress outside 0 to 100 is invalid" do
+      too_high = Execution.new(action_key: "import_users", performer: users(:admin), arguments: { "user_ids" => [1] }, progress: 150)
+      too_low = Execution.new(action_key: "import_users", performer: users(:admin), arguments: { "user_ids" => [1] }, progress: -1)
+
+      assert_not too_high.valid?
+      assert_not too_low.valid?
+      assert_includes too_high.errors[:progress], "must be less than or equal to 100"
+      assert_includes too_low.errors[:progress], "must be greater than or equal to 0"
     end
 
     private

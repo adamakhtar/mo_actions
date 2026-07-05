@@ -13,8 +13,6 @@ module MoActions
     validates :position, presence: true, uniqueness: { scope: :execution_id }
     validates :progress, numericality: { only_integer: true, greater_than_or_equal_to: 0, less_than_or_equal_to: 100 }
 
-    before_validation :clamp_progress
-
     def run! = transition_to!("running", from: "pending", started_at: Time.current)
 
     def succeed! = transition_to!("succeeded", from: "running", finished_at: Time.current)
@@ -30,10 +28,5 @@ module MoActions
       update!(attributes.merge(status: new_status))
     end
 
-    def clamp_progress
-      return if progress.nil?
-
-      self.progress = progress.clamp(0, 100)
-    end
   end
 end
