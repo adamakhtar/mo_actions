@@ -1,0 +1,5 @@
+<%= render "mo_actions/arguments/field_shell",
+           definition: definition,
+           errors: argument_errors(arguments, definition),
+           label: label_tag(argument_input_id(definition), definition.name.to_s.humanize),
+           field: datetime_local_field_tag(argument_input_name(definition), datetime_field_value(argument_value(arguments, definition)), id: argument_input_id(definition), required: definition.required?, class: "mo-actions-input") %>

@@ -1,0 +1,7 @@
+<% step = definition.type == :decimal ? "any" : "1" %>
+
+<%= render "mo_actions/arguments/field_shell",
+           definition: definition,
+           errors: argument_errors(arguments, definition),
+           label: label_tag(argument_input_id(definition), definition.name.to_s.humanize),
+           field: number_field_tag(argument_input_name(definition), argument_value(arguments, definition), id: argument_input_id(definition), required: definition.required?, step: step, class: "mo-actions-input") %>

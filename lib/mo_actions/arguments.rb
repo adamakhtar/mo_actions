@@ -6,7 +6,7 @@ module MoActions
       inclusion: ActiveModel::Validations::InclusionValidator
     }.freeze
 
-    attr_reader :action_class, :errors
+    attr_reader :action_class, :errors, :cast_errors
 
     def self.build(action_class, raw_hash) = new(action_class, raw_hash || {}).tap(&:validate)
 
@@ -15,12 +15,15 @@ module MoActions
       @raw_hash = raw_hash.to_h.with_indifferent_access
       @values = {}
       @errors = ActiveModel::Errors.new(self)
+      @cast_errors = ActiveModel::Errors.new(self)
       define_readers
     end
 
     def [](name) = @values[name.to_sym]
 
     def valid? = errors.empty?
+
+    def castable? = cast_errors.empty?
 
     def validate
       action_class.argument_definitions.each { |definition| cast_and_validate(definition) }
@@ -65,7 +68,7 @@ module MoActions
       result = definition.type_object.cast(raw)
       @values[definition.name] = result.value if error_key == definition.name
 
-      add_error(error_key, result.error) unless result.valid?
+      add_error(error_key, result.error, cast: true) unless result.valid?
       run_validator(:presence, error_key, result.value, {}) if definition.required?
       validate_value(definition, error_key, result.value) if result.valid?
       result.value
@@ -116,7 +119,10 @@ module MoActions
       value.respond_to?(:empty?) ? value.empty? : value.nil?
     end
 
-    def add_error(attribute, message) = errors.add(attribute, message)
+    def add_error(attribute, message, cast: false)
+      errors.add(attribute, message)
+      cast_errors.add(attribute, message) if cast
+    end
 
     def serialize(value)
       case value

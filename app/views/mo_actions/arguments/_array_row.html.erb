@@ -1,0 +1,39 @@
+<div class="mo-actions-array-row" data-array-field-target="row">
+  <div class="mo-actions-array-input">
+    <% input_id = argument_input_id(definition, index) %>
+
+    <% case definition.type %>
+    <% when :integer %>
+      <%= number_field_tag array_argument_input_name(definition), value, id: input_id, step: 1, class: "mo-actions-input", data: { array_field_target: "input" } %>
+    <% when :decimal %>
+      <%= number_field_tag array_argument_input_name(definition), value, id: input_id, step: "any", class: "mo-actions-input", data: { array_field_target: "input" } %>
+    <% when :boolean %>
+      <%= select_tag array_argument_input_name(definition), options_for_select([["No", "0"], ["Yes", "1"]], value.to_s), id: input_id, class: "mo-actions-input", data: { array_field_target: "input" } %>
+    <% when :date %>
+      <%= date_field_tag array_argument_input_name(definition), value, id: input_id, class: "mo-actions-input", data: { array_field_target: "input" } %>
+    <% when :datetime %>
+      <%= datetime_local_field_tag array_argument_input_name(definition), datetime_field_value(value), id: input_id, class: "mo-actions-input", data: { array_field_target: "input" } %>
+    <% when :enum %>
+      <%= select_tag array_argument_input_name(definition), options_for_select(definition.type_options.fetch(:values).map { |option| [option.to_s.humanize, option] }, value), id: input_id, include_blank: true, class: "mo-actions-input", data: { array_field_target: "input" } %>
+    <% when :file %>
+      <%= text_field_tag array_argument_input_name(definition), nil, id: input_id, disabled: true, placeholder: "File uploads arrive in phase 7", class: "mo-actions-input", data: { array_field_target: "input" } %>
+    <% else %>
+      <%= text_field_tag array_argument_input_name(definition), value, id: input_id, class: "mo-actions-input", data: { array_field_target: "input" } %>
+    <% end %>
+
+    <% row_errors = index.nil? ? [] : argument_errors(arguments, definition, index) %>
+    <% if row_errors.present? %>
+      <ul class="mo-actions-errors">
+        <% row_errors.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    <% end %>
+  </div>
+
+  <div class="mo-actions-array-controls">
+    <button type="button" class="mo-actions-button mo-actions-button--secondary" data-action="array-field#moveUp">Up</button>
+    <button type="button" class="mo-actions-button mo-actions-button--secondary" data-action="array-field#moveDown">Down</button>
+    <button type="button" class="mo-actions-button mo-actions-button--danger" data-action="array-field#remove">Remove</button>
+  </div>
+</div>
