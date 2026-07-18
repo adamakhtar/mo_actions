@@ -1,0 +1,22 @@
+<h1>Mo Actions</h1>
+
+<% if @actions_by_category.empty? %>
+  <p>No actions registered. Define one in <code>app/actions</code>.</p>
+<% end %>
+
+<% @actions_by_category.each do |category, actions| %>
+  <section>
+    <h2><%= category.to_s.humanize %></h2>
+    <ul>
+      <% actions.each do |action| %>
+        <li>
+          <strong><%= action.display_name %></strong>
+          <% if action.description %>
+            <p><%= action.description %></p>
+          <% end %>
+          <%= button_to "Run", run_action_path(action.key) %>
+        </li>
+      <% end %>
+    </ul>
+  </section>
+<% end %>
