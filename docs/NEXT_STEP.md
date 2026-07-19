@@ -1,5 +1,7 @@
 # Next Step
 
+Status: **ready** (decided, not yet built)
+
 ## Goal
 
 Let operators start a new run pre-filled from a past execution ("Run again").
