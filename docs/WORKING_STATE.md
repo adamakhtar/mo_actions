@@ -13,7 +13,7 @@
 
 - Everything is in-memory POROs except the dummy app's trivial `User` model for auth: no engine database tables, no persistence, no jobs.
 - Gem code lives in `lib/mo_actions/{base,registry,configuration,argument_definition,engine}.rb`; dashboard is one controller (`MoActions::ActionsController`) with `index` and `run`.
-- `ArgumentDefinition#cast` does light coercion only (blank/uncastable integers → nil; booleans via `ActiveModel::Type::Boolean`). No requiredness or validation errors yet.
+- `ArgumentDefinition#cast` delegates to `ActiveModel::Type.lookup` (string/integer/boolean). No requiredness or validation errors yet.
 - `Registry.find` scans `all` by key rather than keeping a key-indexed hash — avoids stale-key problems when `key` is overridden after `inherited` registration, and is plenty fast for the expected action counts.
 
 ## Decisions

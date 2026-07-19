@@ -13,13 +13,15 @@ module MoActions
       assert_equal false, boolean.cast("0")
     end
 
-    test "blank or uncastable integers become nil" do
+    test "integer casting follows ActiveModel::Type::Integer" do
       integer = ArgumentDefinition.new(name: :count, type: :integer)
 
       assert_nil integer.cast(nil)
       assert_nil integer.cast("")
-      assert_nil integer.cast("abc")
+      # Rails' integer type uses to_i, so non-numeric strings become 0.
+      assert_equal 0, integer.cast("abc")
     end
+
 
     test "rejects unsupported types" do
       error = assert_raises(ArgumentError) do
