@@ -62,6 +62,13 @@ module MoActions
       end
     end
 
+    # Coerced argument values keyed by name (string), suitable for persistence.
+    def argument_values
+      self.class.arguments.each_with_object({}) do |definition, hash|
+        hash[definition.name.to_s] = public_send(definition.name)
+      end
+    end
+
     def perform
       raise NotImplementedError, "#{self.class.name} must implement #perform"
     end

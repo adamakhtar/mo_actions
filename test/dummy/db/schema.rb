@@ -10,7 +10,22 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_19_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_19_180000) do
+  create_table "mo_actions_executions", force: :cascade do |t|
+    t.string "action_key", null: false
+    t.json "arguments", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.text "error_message"
+    t.integer "performer_id"
+    t.string "performer_type"
+    t.string "status", null: false
+    t.datetime "updated_at", null: false
+    t.index ["action_key"], name: "index_mo_actions_executions_on_action_key"
+    t.index ["created_at"], name: "index_mo_actions_executions_on_created_at"
+    t.index ["performer_type", "performer_id"], name: "index_mo_actions_executions_on_performer"
+    t.index ["status"], name: "index_mo_actions_executions_on_status"
+  end
+
   create_table "users", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "name", null: false

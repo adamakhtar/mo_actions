@@ -46,7 +46,15 @@ MoActions.configure do |config|
 end
 ```
 
-Without `authenticate_with`, the dashboard rejects requests with 403. Visiting the dashboard lists registered actions grouped by category. Argument-free actions get a one-click Run button; actions with `argument` declarations get a generated form. Run invokes `perform` synchronously with coerced values on the instance.
+Without `authenticate_with`, the dashboard rejects requests with 403. Visiting the dashboard lists registered actions grouped by category. Argument-free actions get a one-click Run button; actions with `argument` declarations get a generated form. Run invokes `perform` synchronously with coerced values on the instance, persists an execution record (key, arguments, performer, succeeded/failed), and lists recent executions on the dashboard.
+
+Copy engine migrations after install:
+
+```bash
+$ bin/rails mo_actions:install:migrations
+$ bin/rails db:migrate
+```
+
 
 ## Development
 
