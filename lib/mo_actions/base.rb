@@ -9,13 +9,14 @@ module MoActions
   #     argument :source, type: :string, required: true
   #     argument :notify, type: :boolean, description: "Email ops when done"
   #
-  #     def perform
-  #       # source, notify available as cast readers after #execute
+  #     def perform(ctx)
+  #       ctx.total = rows.size
+  #       rows.each_with_index { |row, i| import(row); ctx.progress(i + 1) }
   #     end
   #   end
   #
-  # Prefer +execute+ (validates, casts, +perform+, persists an Execution)
-  # over calling +perform+ directly.
+  # Prefer +execute+ (validates, casts, persists a running Execution, enqueues
+  # the job) over calling +perform+ directly.
   class Base
     include ActiveModel::Model
 
@@ -83,29 +84,27 @@ module MoActions
       end
     end
 
-    # Validate raw input, cast, run +perform+, and persist an Execution.
-    # Returns false without side effects when invalid. Perform failures are
-    # recorded as failed executions (not raised).
+    # Validate raw input, cast, persist a running Execution, and enqueue work.
+    # Returns false without side effects when invalid. The job records
+    # succeeded/failed on the same execution.
     def execute(performer: nil)
       return false unless valid?
 
       cast_arguments!
 
-      begin
-        perform
-        record_execution!(performer: performer, status: "succeeded")
-      rescue => error
-        record_execution!(
-          performer: performer,
-          status: "failed",
-          error_message: error.message
-        )
-      end
+      @execution = Execution.create!(
+        action_key: self.class.key,
+        arguments: argument_values,
+        performer: performer,
+        status: "running",
+        progress_current: 0
+      )
+      RunExecutionJob.perform_later(@execution.id)
 
       true
     end
 
-    def perform
+    def perform(ctx)
       raise NotImplementedError, "#{self.class.name} must implement #perform"
     end
 
@@ -115,16 +114,6 @@ module MoActions
       self.class.arguments.each do |definition|
         public_send("#{definition.name}=", definition.cast(public_send(definition.name)))
       end
-    end
-
-    def record_execution!(performer:, status:, error_message: nil)
-      @execution = Execution.create!(
-        action_key: self.class.key,
-        arguments: argument_values,
-        performer: performer,
-        status: status,
-        error_message: error_message
-      )
     end
   end
 end

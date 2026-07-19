@@ -28,6 +28,7 @@
       <tr>
         <th>Action</th>
         <th>Status</th>
+        <th>Progress</th>
         <th>Performer</th>
         <th>Arguments</th>
         <th>When</th>
@@ -38,6 +39,13 @@
         <tr>
           <td><%= link_to execution.action_display_name, execution_path(execution) %></td>
           <td><%= execution.status %></td>
+          <td>
+            <% if execution.progress_total %>
+              <%= execution.progress_current %> / <%= execution.progress_total %>
+            <% else %>
+              <%= execution.progress_current %>
+            <% end %>
+          </td>
           <td><%= execution.performer&.try(:name) || execution.performer || "—" %></td>
           <td><%= execution.arguments.presence || "—" %></td>
           <td><%= execution.created_at %></td>

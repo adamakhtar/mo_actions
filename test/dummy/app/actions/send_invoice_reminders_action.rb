@@ -6,9 +6,14 @@ class SendInvoiceRemindersAction < MoActions::Base
   argument :days_overdue, type: :integer, required: true, description: "Only remind for invoices at least this many days overdue"
   argument :dry_run, type: :boolean, description: "Log what would be sent without emailing"
 
-  def perform
-    Rails.logger.info(
-      "Pretending to send invoice reminders (days_overdue=#{days_overdue.inspect}, dry_run=#{dry_run.inspect})."
-    )
+  def perform(ctx)
+    total = [ days_overdue, 1 ].max
+    ctx.total = total
+    total.times do |i|
+      Rails.logger.info(
+        "Pretending to send invoice reminder #{i + 1}/#{total} (dry_run=#{dry_run.inspect})."
+      )
+      ctx.progress(i + 1)
+    end
   end
 end

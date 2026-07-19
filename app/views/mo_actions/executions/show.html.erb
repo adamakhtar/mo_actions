@@ -2,6 +2,10 @@
 
 <p><%= link_to "← Executions", executions_path %></p>
 
+<% if @execution.running? %>
+  <p class="running-hint"><%= link_to "Refresh", execution_path(@execution) %> to update progress.</p>
+<% end %>
+
 <dl class="execution-detail">
   <dt>Action</dt>
   <dd>
@@ -11,6 +15,18 @@
 
   <dt>Status</dt>
   <dd><%= @execution.status %></dd>
+
+  <dt>Progress</dt>
+  <dd class="progress">
+    <% if @execution.progress_total %>
+      <%= @execution.progress_current %> / <%= @execution.progress_total %>
+      <% if (percent = @execution.progress_percent) %>
+        (<%= percent %>%)
+      <% end %>
+    <% else %>
+      <%= @execution.progress_current %>
+    <% end %>
+  </dd>
 
   <dt>Performer</dt>
   <dd><%= @execution.performer&.try(:name) || @execution.performer || "—" %></dd>

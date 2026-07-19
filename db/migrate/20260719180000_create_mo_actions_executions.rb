@@ -9,6 +9,8 @@ class CreateMoActionsExecutions < ActiveRecord::Migration[7.0]
       t.references :performer, polymorphic: true, null: true
       t.json :arguments, null: false, default: {}
       t.text :error_message
+      t.integer :progress_current, null: false, default: 0
+      t.integer :progress_total
 
       t.timestamps
     end

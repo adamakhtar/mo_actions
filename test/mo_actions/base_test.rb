@@ -45,7 +45,7 @@ class MoActions::BaseTest < ActiveSupport::TestCase
   end
 
   test "perform must be implemented by subclasses" do
-    assert_raises(NotImplementedError) { BareTestAction.new.perform }
+    assert_raises(NotImplementedError) { BareTestAction.new.perform(nil) }
   end
 
   private

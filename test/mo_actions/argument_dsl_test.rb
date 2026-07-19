@@ -7,7 +7,7 @@ class ReminderArgsTestAction < MoActions::Base
   argument :limit, type: :integer
   argument :dry_run, type: :boolean
 
-  def perform; end
+  def perform(_ctx); end
 end
 
 module MoActions
@@ -47,7 +47,7 @@ module MoActions
         category :testing
         argument :label, type: :string, required: true
 
-        def perform
+        def perform(_ctx)
           raise "perform should not run"
         end
       end
@@ -61,7 +61,7 @@ module MoActions
       assert_includes action.errors[:label], "can't be blank"
     end
 
-    test "execute casts arguments, calls perform, and records a succeeded execution" do
+    test "execute casts arguments, enqueues work, and records a succeeded execution" do
       user = User.create!(name: "Ada")
       action = ReminderArgsTestAction.new(
         email: "ops@example.com",
@@ -74,7 +74,7 @@ module MoActions
         { "email" => "ops@example.com", "limit" => 10, "dry_run" => false },
         action.argument_values
       )
-      assert_equal "succeeded", action.execution.status
+      assert_equal "succeeded", action.execution.reload.status
       assert_equal user, action.execution.performer
       assert_equal "reminder_args_test", action.execution.action_key
     end
@@ -84,15 +84,34 @@ module MoActions
         def self.name = "BoomAction"
         category :testing
 
-        def perform
+        def perform(_ctx)
           raise "boom"
         end
       end
 
       action = klass.new
       assert action.execute
-      assert action.execution.failed?
+      assert action.execution.reload.failed?
       assert_equal "boom", action.execution.error_message
+    end
+
+    test "perform can report total and progress onto the execution" do
+      klass = Class.new(MoActions::Base) do
+        def self.name = "ProgressAction"
+        category :testing
+
+        def perform(ctx)
+          ctx.total = 4
+          ctx.progress(2)
+        end
+      end
+
+      action = klass.new
+      assert action.execute
+      execution = action.execution.reload
+      assert execution.succeeded?
+      assert_equal 4, execution.progress_total
+      assert_equal 2, execution.progress_current
     end
 
     test "required arguments use ActiveModel presence validation" do
@@ -100,7 +119,7 @@ module MoActions
         def self.name = "RequiredArgAction"
         category :testing
         argument :label, type: :string, required: true
-        def perform; end
+        def perform(_ctx); end
       end
 
       action = klass.new(label: "")
