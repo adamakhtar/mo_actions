@@ -14,9 +14,12 @@ module MoActions
   #     end
   #   end
   #
-  # Prefer +execute+ (validates, casts, then +perform+) over calling +perform+ directly.
+  # Prefer +execute+ (validates, casts, +perform+, persists an Execution)
+  # over calling +perform+ directly.
   class Base
     include ActiveModel::Model
+
+    attr_reader :execution
 
     class << self
       def inherited(subclass)
@@ -73,20 +76,32 @@ module MoActions
     end
 
     # Coerced argument values keyed by name (string), suitable for persistence.
-    # Populated after a successful +execute+ (or +cast_arguments!+).
+    # Populated after a successful validation + cast inside +execute+.
     def argument_values
       self.class.arguments.each_with_object({}) do |definition, hash|
         hash[definition.name.to_s] = public_send(definition.name)
       end
     end
 
-    # Validate raw input, cast, then run +perform+.
-    # Returns false without casting or performing when invalid.
-    def execute
+    # Validate raw input, cast, run +perform+, and persist an Execution.
+    # Returns false without side effects when invalid. Perform failures are
+    # recorded as failed executions (not raised).
+    def execute(performer: nil)
       return false unless valid?
 
       cast_arguments!
-      perform
+
+      begin
+        perform
+        record_execution!(performer: performer, status: "succeeded")
+      rescue => error
+        record_execution!(
+          performer: performer,
+          status: "failed",
+          error_message: error.message
+        )
+      end
+
       true
     end
 
@@ -100,6 +115,16 @@ module MoActions
       self.class.arguments.each do |definition|
         public_send("#{definition.name}=", definition.cast(public_send(definition.name)))
       end
+    end
+
+    def record_execution!(performer:, status:, error_message: nil)
+      @execution = Execution.create!(
+        action_key: self.class.key,
+        arguments: argument_values,
+        performer: performer,
+        status: status,
+        error_message: error_message
+      )
     end
   end
 end

@@ -31,14 +31,17 @@ module MoActions
       assert_equal "10", action.limit
       assert_equal "1", action.dry_run
 
-      assert action.execute
+      assert_difference -> { MoActions::Execution.count }, 1 do
+        assert action.execute
+      end
 
       assert_equal "ops@example.com", action.email
       assert_equal 10, action.limit
       assert_equal true, action.dry_run
+      assert action.execution.succeeded?
     end
 
-    test "execute returns false when invalid and does not cast or perform" do
+    test "execute returns false when invalid and does not cast, perform, or persist" do
       klass = Class.new(MoActions::Base) do
         def self.name = "ExecuteGuardAction"
         category :testing
@@ -50,23 +53,46 @@ module MoActions
       end
 
       action = klass.new(label: "")
-      assert_not action.execute
+      assert_no_difference -> { MoActions::Execution.count } do
+        assert_not action.execute
+      end
       assert_equal "", action.label
+      assert_nil action.execution
       assert_includes action.errors[:label], "can't be blank"
     end
 
-    test "execute casts arguments then calls perform" do
+    test "execute casts arguments, calls perform, and records a succeeded execution" do
+      user = User.create!(name: "Ada")
       action = ReminderArgsTestAction.new(
         email: "ops@example.com",
         limit: "10",
         dry_run: "0"
       )
 
-      assert action.execute
+      assert action.execute(performer: user)
       assert_equal(
         { "email" => "ops@example.com", "limit" => 10, "dry_run" => false },
         action.argument_values
       )
+      assert_equal "succeeded", action.execution.status
+      assert_equal user, action.execution.performer
+      assert_equal "reminder_args_test", action.execution.action_key
+    end
+
+    test "execute records a failed execution when perform raises" do
+      klass = Class.new(MoActions::Base) do
+        def self.name = "BoomAction"
+        category :testing
+
+        def perform
+          raise "boom"
+        end
+      end
+
+      action = klass.new
+      assert action.execute
+      assert action.execution.failed?
+      assert_equal "boom", action.execution.error_message
     end
 
     test "required arguments use ActiveModel presence validation" do
