@@ -6,14 +6,21 @@ module MoActions
   #     description "Imports users from the nightly CSV export."
   #     category :billing
   #
-  #     argument :source, type: :string
+  #     argument :source, type: :string, required: true
   #     argument :notify, type: :boolean, description: "Email ops when done"
   #
   #     def perform
-  #       # source, notify available as readers
+  #       # source, notify available as cast readers after #execute
   #     end
   #   end
+  #
+  # Prefer +execute+ (validates, casts, +perform+, persists an Execution)
+  # over calling +perform+ directly.
   class Base
+    include ActiveModel::Model
+
+    attr_reader :execution
+
     class << self
       def inherited(subclass)
         super
@@ -43,11 +50,24 @@ module MoActions
           "#{name} has no category. Declare one with `category :some_category`."
       end
 
-      def argument(name, type: :string, description: nil)
-        definition = ArgumentDefinition.new(name: name, type: type, description: description)
+      def argument(name, type: :string, description: nil, required: false)
+        definition = ArgumentDefinition.new(
+          name: name,
+          type: type,
+          description: description,
+          required: required
+        )
         arguments.reject! { |existing| existing.name == definition.name }
         arguments << definition
-        attr_reader definition.name
+        attr_accessor definition.name
+
+        # Rails validators — declared at definition time so hosts get normal
+        # ActiveModel errors/I18n. Values are still raw here; cast after valid?
+        validates definition.name, presence: true if definition.required?
+
+        if definition.type == :integer
+          validates definition.name, numericality: { only_integer: true }, allow_blank: true
+        end
       end
 
       def arguments
@@ -55,22 +75,56 @@ module MoActions
       end
     end
 
-    def initialize(raw_arguments = {})
-      raw = raw_arguments.to_h.with_indifferent_access
-      self.class.arguments.each do |definition|
-        instance_variable_set(:"@#{definition.name}", definition.cast(raw[definition.name]))
-      end
-    end
-
     # Coerced argument values keyed by name (string), suitable for persistence.
+    # Populated after a successful validation + cast inside +execute+.
     def argument_values
       self.class.arguments.each_with_object({}) do |definition, hash|
         hash[definition.name.to_s] = public_send(definition.name)
       end
     end
 
+    # Validate raw input, cast, run +perform+, and persist an Execution.
+    # Returns false without side effects when invalid. Perform failures are
+    # recorded as failed executions (not raised).
+    def execute(performer: nil)
+      return false unless valid?
+
+      cast_arguments!
+
+      begin
+        perform
+        record_execution!(performer: performer, status: "succeeded")
+      rescue => error
+        record_execution!(
+          performer: performer,
+          status: "failed",
+          error_message: error.message
+        )
+      end
+
+      true
+    end
+
     def perform
       raise NotImplementedError, "#{self.class.name} must implement #perform"
+    end
+
+    private
+
+    def cast_arguments!
+      self.class.arguments.each do |definition|
+        public_send("#{definition.name}=", definition.cast(public_send(definition.name)))
+      end
+    end
+
+    def record_execution!(performer:, status:, error_message: nil)
+      @execution = Execution.create!(
+        action_key: self.class.key,
+        arguments: argument_values,
+        performer: performer,
+        status: status,
+        error_message: error_message
+      )
     end
   end
 end

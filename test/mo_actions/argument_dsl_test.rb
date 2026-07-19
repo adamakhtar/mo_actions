@@ -6,6 +6,8 @@ class ReminderArgsTestAction < MoActions::Base
   argument :email, type: :string, description: "Who to notify"
   argument :limit, type: :integer
   argument :dry_run, type: :boolean
+
+  def perform; end
 end
 
 module MoActions
@@ -18,7 +20,7 @@ module MoActions
       assert_equal "Who to notify", definitions.first.description
     end
 
-    test "initialize coerces params onto instance readers" do
+    test "initialize keeps raw params until execute casts them" do
       action = ReminderArgsTestAction.new(
         "email" => "ops@example.com",
         "limit" => "10",
@@ -26,21 +28,93 @@ module MoActions
       )
 
       assert_equal "ops@example.com", action.email
+      assert_equal "10", action.limit
+      assert_equal "1", action.dry_run
+
+      assert_difference -> { MoActions::Execution.count }, 1 do
+        assert action.execute
+      end
+
+      assert_equal "ops@example.com", action.email
       assert_equal 10, action.limit
       assert_equal true, action.dry_run
+      assert action.execution.succeeded?
     end
 
-    test "argument_values returns coerced values keyed by name" do
+    test "execute returns false when invalid and does not cast, perform, or persist" do
+      klass = Class.new(MoActions::Base) do
+        def self.name = "ExecuteGuardAction"
+        category :testing
+        argument :label, type: :string, required: true
+
+        def perform
+          raise "perform should not run"
+        end
+      end
+
+      action = klass.new(label: "")
+      assert_no_difference -> { MoActions::Execution.count } do
+        assert_not action.execute
+      end
+      assert_equal "", action.label
+      assert_nil action.execution
+      assert_includes action.errors[:label], "can't be blank"
+    end
+
+    test "execute casts arguments, calls perform, and records a succeeded execution" do
+      user = User.create!(name: "Ada")
       action = ReminderArgsTestAction.new(
         email: "ops@example.com",
         limit: "10",
         dry_run: "0"
       )
 
+      assert action.execute(performer: user)
       assert_equal(
         { "email" => "ops@example.com", "limit" => 10, "dry_run" => false },
         action.argument_values
       )
+      assert_equal "succeeded", action.execution.status
+      assert_equal user, action.execution.performer
+      assert_equal "reminder_args_test", action.execution.action_key
+    end
+
+    test "execute records a failed execution when perform raises" do
+      klass = Class.new(MoActions::Base) do
+        def self.name = "BoomAction"
+        category :testing
+
+        def perform
+          raise "boom"
+        end
+      end
+
+      action = klass.new
+      assert action.execute
+      assert action.execution.failed?
+      assert_equal "boom", action.execution.error_message
+    end
+
+    test "required arguments use ActiveModel presence validation" do
+      klass = Class.new(MoActions::Base) do
+        def self.name = "RequiredArgAction"
+        category :testing
+        argument :label, type: :string, required: true
+        def perform; end
+      end
+
+      action = klass.new(label: "")
+      assert_not action.valid?
+      assert_includes action.errors[:label], "can't be blank"
+    end
+
+    test "integer arguments use ActiveModel numericality validation on raw input" do
+      action = ReminderArgsTestAction.new(limit: "abc")
+      assert_not action.valid?
+      assert_includes action.errors[:limit], "is not a number"
+
+      action = ReminderArgsTestAction.new(limit: "10")
+      assert action.valid?
     end
 
     test "redeclaring an argument replaces the previous definition" do

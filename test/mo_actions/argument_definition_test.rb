@@ -30,5 +30,13 @@ module MoActions
 
       assert_match(/unsupported argument type :date/, error.message)
     end
+
+    test "required defaults to false" do
+      optional = ArgumentDefinition.new(name: :label, type: :string)
+      required = ArgumentDefinition.new(name: :label, type: :string, required: true)
+
+      assert_not optional.required?
+      assert required.required?
+    end
   end
 end

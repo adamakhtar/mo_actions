@@ -2,27 +2,26 @@
 
 ## Goal
 
-Reject invalid argument input before `perform` runs, and show field errors on the generated run form.
+Add a read-only execution detail page so operators can open a past run and see its full recorded context.
 
 ## In scope
 
-- Requiredness on the argument DSL (`argument :name, type: :string, required: true` or equivalent small API)
-- Validate/coerce submitted params in the dashboard `run` action before instantiating/`perform`
-- On failure: no execution record, re-render the index (or a minimal run form) with per-field errors and prior values
-- Clear errors for blank required values and obviously bad casts (e.g. non-integer for `:integer`)
-- Tests for required blank, bad cast, successful path still creates an execution
+- `ExecutionsController#show` + route
+- Detail view: action name/key, status, performer, arguments, error message (when failed), timestamps
+- Link each row on the executions index to its detail page
+- Graceful render when the action key is no longer registered (show raw key)
+- Tests for show content (succeeded and failed) and unknown id → 404
 
 ## Out of scope
 
 - Drafts / edit-before-run flow
 - Async execution, progress, logs, batching
-- Preflight, authorization rules, audit export, retention/cleanup
-- Execution detail / show page, re-run from a past execution
-- Composite/array/file argument types
+- Filtered audit tabs (Succeeded/Failed/Active), re-run from a past execution
+- Preflight, authorization rules, retention/cleanup
+- New argument types
 
 ## Done when
 
-- Invalid runs do not call `perform` and do not create an `Execution`.
-- The operator sees which fields failed and why.
-- Valid runs still succeed and persist as today.
+- Operators can open a past execution from the executions index and see its recorded fields.
+- Missing executions 404.
 - Full suite green.

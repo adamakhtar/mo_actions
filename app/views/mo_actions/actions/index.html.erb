@@ -1,5 +1,7 @@
 <h1>Mo Actions</h1>
 
+<p><%= link_to "All executions", executions_path %></p>
+
 <% if @actions_by_category.empty? %>
   <p>No actions registered. Define one in <code>app/actions</code>.</p>
 <% end %>
@@ -8,68 +10,18 @@
   <section>
     <h2><%= category.to_s.humanize %></h2>
     <ul>
-      <% actions.each do |action| %>
+      <% actions.each do |action_class| %>
         <li>
-          <strong><%= action.display_name %></strong>
-          <% if action.description %>
-            <p><%= action.description %></p>
+          <strong><%= action_class.display_name %></strong>
+          <% if action_class.description %>
+            <p><%= action_class.description %></p>
           <% end %>
-
-          <% if action.arguments.any? %>
-            <%= form_with url: run_action_path(action.key), method: :post do %>
-              <% action.arguments.each do |argument| %>
-                <p>
-                  <%= label_tag "arguments_#{argument.name}", argument.name.to_s.humanize %>
-                  <% if argument.description %>
-                    <span class="argument-description"><%= argument.description %></span>
-                  <% end %>
-                  <% case argument.type %>
-                  <% when :boolean %>
-                    <%= check_box_tag "arguments[#{argument.name}]", "1", false %>
-                  <% when :integer %>
-                    <%= number_field_tag "arguments[#{argument.name}]" %>
-                  <% else %>
-                    <%= text_field_tag "arguments[#{argument.name}]" %>
-                  <% end %>
-                </p>
-              <% end %>
-              <%= submit_tag "Run" %>
-            <% end %>
-          <% else %>
-            <%= button_to "Run", run_action_path(action.key) %>
-          <% end %>
+          <p>
+            <%= link_to "Run", new_execution_path(action_key: action_class.key) %>
+            <%= link_to "Executions", executions_path(action_key: action_class.key) %>
+          </p>
         </li>
       <% end %>
     </ul>
   </section>
 <% end %>
-
-<section class="recent-executions">
-  <h2>Recent executions</h2>
-  <% if @recent_executions.empty? %>
-    <p>No executions yet.</p>
-  <% else %>
-    <table>
-      <thead>
-        <tr>
-          <th>Action</th>
-          <th>Status</th>
-          <th>Performer</th>
-          <th>Arguments</th>
-          <th>When</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% @recent_executions.each do |execution| %>
-          <tr>
-            <td><%= execution.action_display_name %></td>
-            <td><%= execution.status %></td>
-            <td><%= execution.performer&.try(:name) || execution.performer || "—" %></td>
-            <td><%= execution.arguments.presence || "—" %></td>
-            <td><%= execution.created_at %></td>
-          </tr>
-        <% end %>
-      </tbody>
-    </table>
-  <% end %>
-</section>
