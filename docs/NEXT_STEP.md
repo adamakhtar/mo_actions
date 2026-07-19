@@ -2,29 +2,29 @@
 
 ## Goal
 
-Put the dashboard behind host-app authentication with a small configuration surface, so the engine is safe to mount in a real app.
+Add a typed argument DSL on actions so operators can supply inputs before a run (still synchronous, still no persistence).
 
 ## In scope
 
-- `MoActions::Configuration` PORO + `MoActions.configure` / `MoActions.config`
-- `authenticate_with` — host-supplied callable run as a `before_action` on the engine's `ApplicationController`; unauthenticated requests rejected (redirect or 403, per the callable)
-- `current_performer` — callable receiving the controller, returning the performer record; exposed as a helper
-- Install generator (`rails g mo_actions:install`) copying a commented initializer template
-- Dummy app wired with a trivial auth scheme to exercise both paths
-- Tests: config defaults and setters, unauthenticated rejection, authenticated access, `current_performer` resolution
+- Argument declaration on `MoActions::Base` (e.g. `argument :email, type: :string, required: true`)
+- A small set of scalar types (`string`, `integer`, `boolean` — expand only if a dummy action needs more)
+- Generated run form on the dashboard for actions that declare arguments
+- Passing submitted params into the action instance before `#perform`
+- Validation of required/typed args with clear flash errors (no run on failure)
+- Tests for DSL, coercion/validation, form rendering, and rejected/accepted runs
 
 ## Out of scope
 
-- Per-action authorization rules
-- Arguments and forms
-- Persistence / execution records
+- File uploads / ActiveStorage
+- Persistence / execution records / drafts
 - Async execution, progress, logs
+- Per-action authorization rules
 - Batching, preflight, audit trail, retention
-- Performer model configuration beyond the `current_performer` callable
+- Nested/composite argument types
 
 ## Done when
 
-- An unauthenticated request to the dummy app's `/mo_actions` is rejected.
-- An authenticated request sees the dashboard and can run an action.
-- `MoActions.configure` works from an initializer; defaults are sensible when unset.
+- An action with arguments shows a form; submitting valid values runs `perform` with those values available on the instance.
+- Invalid or missing required arguments do not run the action and show an error.
+- Argument-free actions keep the existing one-click Run behavior.
 - Full suite green.

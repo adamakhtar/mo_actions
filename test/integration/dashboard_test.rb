@@ -16,6 +16,11 @@ class CountingTestAction < MoActions::Base
 end
 
 class DashboardTest < ActionDispatch::IntegrationTest
+  setup do
+    @user = User.create!(name: "Operator")
+    authenticate_as(@user)
+  end
+
   test "dashboard lists registered actions grouped by category" do
     get mo_actions.root_path
 
