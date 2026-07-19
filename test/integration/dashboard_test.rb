@@ -188,6 +188,79 @@ class DashboardTest < ActionDispatch::IntegrationTest
     assert_select "a[href=?]", mo_actions.new_execution_path(action_key: "counting_test"), text: /Run Counting Test/
   end
 
+  test "executions index links each row to its detail page" do
+    execution = MoActions::Execution.create!(
+      action_key: "counting_test",
+      status: "succeeded",
+      performer: @user,
+      arguments: {}
+    )
+
+    get mo_actions.executions_path
+
+    assert_response :success
+    assert_select "a[href=?]", mo_actions.execution_path(execution), text: "Counting Test"
+  end
+
+  test "execution show renders succeeded run detail" do
+    execution = MoActions::Execution.create!(
+      action_key: "capturing_args_test",
+      status: "succeeded",
+      performer: @user,
+      arguments: { "label" => "hello", "count" => 3, "enabled" => true }
+    )
+
+    get mo_actions.execution_path(execution)
+
+    assert_response :success
+    assert_select "h1", "Execution"
+    assert_select ".execution-detail" do
+      assert_select "dd", /Capturing Args Test/
+      assert_select "dd .action-key", "(capturing_args_test)"
+      assert_select "dd", "succeeded"
+      assert_select "dd", "Operator"
+      assert_select "dd", /hello/
+    end
+    assert_select ".error-message", count: 0
+    assert_select "a[href=?]", mo_actions.executions_path, text: "← Executions"
+  end
+
+  test "execution show renders failed run error message" do
+    execution = MoActions::Execution.create!(
+      action_key: "failing_test",
+      status: "failed",
+      performer: @user,
+      arguments: {},
+      error_message: "boom"
+    )
+
+    get mo_actions.execution_path(execution)
+
+    assert_response :success
+    assert_select "dd", "failed"
+    assert_select "dd.error-message", "boom"
+  end
+
+  test "execution show falls back to raw key when action is unregistered" do
+    execution = MoActions::Execution.create!(
+      action_key: "deleted_action",
+      status: "succeeded",
+      arguments: { "x" => 1 }
+    )
+
+    get mo_actions.execution_path(execution)
+
+    assert_response :success
+    assert_select "dd", /deleted_action/
+    assert_select "dd .action-key", "(deleted_action)"
+  end
+
+  test "unknown execution id returns 404" do
+    get mo_actions.execution_path(id: 0)
+
+    assert_response :not_found
+  end
+
   test "blank required argument re-renders run page errors and skips persistence" do
     assert_no_difference -> { MoActions::Execution.count } do
       post mo_actions.executions_path, params: {

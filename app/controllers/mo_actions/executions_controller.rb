@@ -10,6 +10,12 @@ module MoActions
       @filter_actions = Registry.all.sort_by(&:display_name)
     end
 
+    def show
+      @execution = Execution.find(params[:id])
+    rescue ActiveRecord::RecordNotFound
+      head :not_found
+    end
+
     def new
       @action = @action_class.new
     end

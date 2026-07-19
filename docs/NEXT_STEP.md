@@ -2,26 +2,26 @@
 
 ## Goal
 
-Add a read-only execution detail page so operators can open a past run and see its full recorded context.
+Let operators start a new run pre-filled from a past execution ("Run again").
 
 ## In scope
 
-- `ExecutionsController#show` + route
-- Detail view: action name/key, status, performer, arguments, error message (when failed), timestamps
-- Link each row on the executions index to its detail page
-- Graceful render when the action key is no longer registered (show raw key)
-- Tests for show content (succeeded and failed) and unknown id → 404
+- "Run again" control on `executions#show` (and optionally the index row)
+- Opens `executions#new` for the same action key with argument fields pre-filled from the past execution's stored arguments
+- Creates a **new** execution when submitted (original untouched)
+- If the action key is no longer registered → no Run again (or 404), detail page still readable
+- Tests: prefill values, submit creates a new record, original unchanged, unregistered action has no control
 
 ## Out of scope
 
-- Drafts / edit-before-run flow
+- Drafts / edit-before-run persistence before confirm
 - Async execution, progress, logs, batching
-- Filtered audit tabs (Succeeded/Failed/Active), re-run from a past execution
+- File arguments / copying ActiveStorage attachments
 - Preflight, authorization rules, retention/cleanup
-- New argument types
+- Filtered audit tabs
 
 ## Done when
 
-- Operators can open a past execution from the executions index and see its recorded fields.
-- Missing executions 404.
+- Operators can re-run from a past execution with prior arguments filled in.
+- Submitting creates a distinct new execution; the source record is unchanged.
 - Full suite green.

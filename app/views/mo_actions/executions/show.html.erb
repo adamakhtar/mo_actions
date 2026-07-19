@@ -1,0 +1,31 @@
+<h1>Execution</h1>
+
+<p><%= link_to "← Executions", executions_path %></p>
+
+<dl class="execution-detail">
+  <dt>Action</dt>
+  <dd>
+    <%= @execution.action_display_name %>
+    <span class="action-key">(<%= @execution.action_key %>)</span>
+  </dd>
+
+  <dt>Status</dt>
+  <dd><%= @execution.status %></dd>
+
+  <dt>Performer</dt>
+  <dd><%= @execution.performer&.try(:name) || @execution.performer || "—" %></dd>
+
+  <dt>Arguments</dt>
+  <dd><%= @execution.arguments.presence || "—" %></dd>
+
+  <% if @execution.failed? && @execution.error_message.present? %>
+    <dt>Error</dt>
+    <dd class="error-message"><%= @execution.error_message %></dd>
+  <% end %>
+
+  <dt>Created</dt>
+  <dd><%= @execution.created_at %></dd>
+
+  <dt>Updated</dt>
+  <dd><%= @execution.updated_at %></dd>
+</dl>

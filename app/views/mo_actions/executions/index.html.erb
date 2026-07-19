@@ -36,7 +36,7 @@
     <tbody>
       <% @executions.each do |execution| %>
         <tr>
-          <td><%= execution.action_display_name %></td>
+          <td><%= link_to execution.action_display_name, execution_path(execution) %></td>
           <td><%= execution.status %></td>
           <td><%= execution.performer&.try(:name) || execution.performer || "—" %></td>
           <td><%= execution.arguments.presence || "—" %></td>

@@ -7,10 +7,11 @@
 - Actions self-register via `MoActions::Base.inherited` into `MoActions::Registry` (`register`, `find`, `all`, `by_category`, `reset!`). The engine's `to_prepare` resets the registry and eager loads `app/actions` so registration works at boot and survives dev code reloading.
 - Dashboard split across two controllers:
   - `ActionsController#index` — actions grouped by category; each row has Run → `executions#new` and Executions → `executions#index?action_key=…`, plus an "All executions" link.
-  - `ExecutionsController` — `index` (recent-first history, optional `action_key` filter), `new` (run form for one action), `create` (validate, cast, perform, persist).
+  - `ExecutionsController` — `index` (recent-first history, optional `action_key` filter), `show` (read-only detail), `new` (run form for one action), `create` (validate, cast, perform, persist).
 - Submitted arguments are validated with ActiveModel before `perform`: `required: true` → `validates …, presence: true`; `type: :integer` → `validates …, numericality: { only_integer: true }, allow_blank: true`. Invalid creates re-render `executions/new` (422), keep prior values, create no execution, and do not call `perform`.
 - Valid runs cast via `ActiveModel::Type`, call `#perform` synchronously, persist a `MoActions::Execution`, then redirect to the executions index (filtered to that action) with flash notice/alert. Unknown action keys on new/create return 404.
 - Each successful/failed run persists `MoActions::Execution` (action key, coerced arguments as json, polymorphic performer when present, `succeeded`/`failed` status, optional `error_message`).
+- Execution detail (`executions#show`) shows action name + key, status, performer, arguments, error message (failed only), and timestamps. Index rows link to detail. Unregistered action keys fall back to the raw key via `action_display_name`. Unknown ids 404.
 - Host authentication via `MoActions.configure`: `authenticate_with` (callable or controller-method symbol) runs as a `before_action` on `MoActions::ApplicationController`; unset config rejects with 403. `current_performer` callable is exposed as a helper and stored on executions. Install generator copies a commented initializer and reminds hosts to `mo_actions:install:migrations`. Dummy app uses session-based login at `/login`.
 
 ## Current model
@@ -30,12 +31,13 @@
 - `required:` defaults to `false` so existing optional args stay optional. Dummy `SendInvoiceRemindersAction` marks `days_overdue` required as the example.
 - Run UX lives on `executions#new` / `#create` (not the actions index) so validation errors have a dedicated page. Actions index only discovers actions and links out.
 - Executions index is the history surface: all actions, recent first, filterable by `action_key`. Filter by unregistered keys still lists matching rows (deleted actions); only new/create require a registered action.
+- Detail page is read-only for now — no re-run control until that slice.
 - Skipped a separate Types hierarchy / Arguments object — definitions + ActiveModel on the action instance are enough.
 - No duplicate-key guard yet; `find` returns the first match. Add a guard when it earns its keep.
 - Dashboard is closed by default (`authenticate_with` nil → 403). Hosts must opt into access via the callable; rejection shape (redirect vs 403) is host-controlled.
 - Polymorphic `performer` on executions — no `performer_class_name` config needed yet; `current_performer` remains the sole host hook.
 - Execution statuses are only `succeeded`/`failed` for sync runs. Did not prebuild draft/queued/running/paused/cancelled, batches, logs, or transition bang-methods — those wait for slices that need them.
-- Failed `perform` is caught, recorded, and surfaced as a flash alert (not a 500). Unknown action keys on new/create still 404 with no persistence. Validation failures are 422 with no persistence.
+- Failed `perform` is caught, recorded, and surfaced as a flash alert (not a 500). Unknown action keys on new/create still 404 with no persistence. Validation failures are 422 with no persistence. Missing execution ids 404.
 - Stored arguments are the coerced values (string keys), not the raw params.
 - Rails 8.1 generated scaffold; gemspec declares `rails >= 7.0`, Ruby `>= 3.1`.
 
@@ -49,7 +51,7 @@ Run with `bin/rails test` (green):
 - `test/mo_actions/argument_definition_test.rb` — cast for string/integer/boolean, blank integer → nil, unsupported type error, required flag.
 - `test/mo_actions/argument_dsl_test.rb` — declaration order, `#execute` validate/cast/perform, redeclare replaces, presence + numericality.
 - `test/mo_actions/execution_test.rb` — validations, recent scope, polymorphic performer, display-name fallback.
-- `test/integration/dashboard_test.rb` — actions index links; run page forms; create with coerced args; unknown key 404; succeeded/failed persistence; executions index + action_key filter; validation 422 on run page.
+- `test/integration/dashboard_test.rb` — actions index links; run page forms; create with coerced args; unknown key 404; succeeded/failed persistence; executions index + action_key filter; validation 422 on run page; execution show (succeeded/failed/unregistered key) + 404.
 - `test/integration/dashboard_auth_test.rb` — unauthenticated redirect, default 403, session login + create, `current_performer` helper, symbol `authenticate_with`.
 
 ## Important constraints
