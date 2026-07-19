@@ -1,5 +1,7 @@
 module MoActions
   class ExecutionsController < ApplicationController
+    before_action :set_action_class, only: %i[new create]
+
     def index
       @action_key = params[:action_key].presence
       @action_class = Registry.all.find { |action| action.key == @action_key } if @action_key
@@ -9,16 +11,10 @@ module MoActions
     end
 
     def new
-      @action_class = find_registered_action!(params[:action_key])
-      return if performed?
-
       @action = @action_class.new
     end
 
     def create
-      @action_class = find_registered_action!(params[:action_key])
-      return if performed?
-
       @action = @action_class.new(argument_params)
 
       unless @action.valid?
@@ -58,11 +54,10 @@ module MoActions
 
     private
 
-    def find_registered_action!(key)
-      Registry.find(key)
+    def set_action_class
+      @action_class = Registry.find(params[:action_key])
     rescue MoActions::ActionNotFound
       head :not_found
-      nil
     end
 
     def argument_params
