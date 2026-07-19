@@ -21,7 +21,14 @@ class MoActions::ExecutionTest < ActiveSupport::TestCase
 
   test "action_display_name falls back to the raw key when unregistered" do
     execution = MoActions::Execution.new(action_key: "gone_action", status: "succeeded")
+    assert_nil execution.action_class
     assert_equal "gone_action", execution.action_display_name
+  end
+
+  test "action_class returns the registered class" do
+    execution = MoActions::Execution.new(action_key: "purge_stale_sessions", status: "succeeded")
+    assert_equal PurgeStaleSessionsAction, execution.action_class
+    assert_equal "Purge Stale Sessions", execution.action_display_name
   end
 
   test "belongs to an optional polymorphic performer" do

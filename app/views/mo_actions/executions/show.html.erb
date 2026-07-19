@@ -2,6 +2,13 @@
 
 <p><%= link_to "← Executions", executions_path %></p>
 
+<% if @action_class %>
+  <p>
+    <%= link_to "Run again",
+          new_execution_path(action_key: @execution.action_key, from_execution: @execution.id) %>
+  </p>
+<% end %>
+
 <dl class="execution-detail">
   <dt>Action</dt>
   <dd>

@@ -20,9 +20,14 @@ module MoActions
     end
 
     def action_display_name
-      Registry.find(action_key).display_name
+      action_class&.display_name || action_key
+    end
+
+    # Registered action class for this run, or nil if the key was removed.
+    def action_class
+      Registry.find(action_key)
     rescue MoActions::ActionNotFound
-      action_key
+      nil
     end
   end
 end
