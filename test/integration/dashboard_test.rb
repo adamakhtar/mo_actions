@@ -47,7 +47,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
     authenticate_as(@user)
   end
 
-  test "dashboard lists registered actions grouped by category" do
+  test "actions index lists registered actions with run and executions links" do
     get mo_actions.root_path
 
     assert_response :success
@@ -56,61 +56,72 @@ class DashboardTest < ActionDispatch::IntegrationTest
     assert_select "li", /Send Invoice Reminders/
     assert_select "li", /Emails a reminder to every customer with an overdue invoice\./
     assert_select "li", /Purge Stale Sessions/
+    assert_select "a[href=?]", mo_actions.new_execution_path(action_key: "purge_stale_sessions"), text: "Run"
+    assert_select "a[href=?]", mo_actions.executions_path(action_key: "purge_stale_sessions"), text: "Executions"
+    assert_select "a[href=?]", mo_actions.executions_path, text: "All executions"
   end
 
-  test "argument-free actions keep a one-click run button" do
-    get mo_actions.root_path
+  test "run page renders argument form for typed actions" do
+    get mo_actions.new_execution_path(action_key: "send_invoice_reminders")
 
-    assert_select "form[action=?][method=post]", mo_actions.run_action_path("purge_stale_sessions") do
-      assert_select "button", "Run"
-      assert_select "input[name^=arguments]", count: 0
-    end
-  end
-
-
-  test "actions with arguments render a form with typed fields" do
-    get mo_actions.root_path
-
-    assert_select "form[action=?][method=post]", mo_actions.run_action_path("send_invoice_reminders") do
+    assert_response :success
+    assert_select "h1", "Run Send Invoice Reminders"
+    assert_select "form[action=?][method=post]", mo_actions.executions_path do
+      assert_select "input[name=action_key][value=send_invoice_reminders]", visible: false
       assert_select "input[name='arguments[days_overdue]'][type=number]"
       assert_select "input[name='arguments[dry_run]'][type=checkbox]"
       assert_select "input[type=submit][value=Run]"
     end
   end
 
-  test "running an action with arguments passes coerced values into perform" do
-    post mo_actions.run_action_path("capturing_args_test"), params: {
+  test "run page for argument-free actions still confirms before create" do
+    get mo_actions.new_execution_path(action_key: "purge_stale_sessions")
+
+    assert_response :success
+    assert_select "form[action=?][method=post]", mo_actions.executions_path do
+      assert_select "input[name=action_key][value=purge_stale_sessions]", visible: false
+      assert_select "input[name^=arguments]", count: 0
+      assert_select "input[type=submit][value=Run]"
+    end
+  end
+
+  test "creating an execution with arguments passes coerced values into perform" do
+    post mo_actions.executions_path, params: {
+      action_key: "capturing_args_test",
       arguments: { label: "hello", count: "3", enabled: "1" }
     }
 
-    assert_redirected_to mo_actions.root_path
+    assert_redirected_to mo_actions.executions_path(action_key: "capturing_args_test")
     assert_equal(
       { label: "hello", count: 3, enabled: true },
       CapturingArgsTestAction.last_values
     )
   end
 
-  test "running an argument-free action invokes its perform method" do
+  test "creating an argument-free execution invokes perform" do
     assert_difference -> { CountingTestAction.performed_count } do
-      post mo_actions.run_action_path("counting_test")
+      post mo_actions.executions_path, params: { action_key: "counting_test" }
     end
 
-    assert_redirected_to mo_actions.root_path
+    assert_redirected_to mo_actions.executions_path(action_key: "counting_test")
     follow_redirect!
     assert_select "p.notice", "Counting Test ran successfully."
   end
 
-  test "running an unknown action returns 404" do
-    assert_no_difference -> { MoActions::Execution.count } do
-      post mo_actions.run_action_path("nonexistent")
-    end
+  test "unknown action key on new or create returns 404" do
+    get mo_actions.new_execution_path(action_key: "nonexistent")
+    assert_response :not_found
 
+    assert_no_difference -> { MoActions::Execution.count } do
+      post mo_actions.executions_path, params: { action_key: "nonexistent" }
+    end
     assert_response :not_found
   end
 
-  test "running an action creates a succeeded execution with performer and arguments" do
+  test "creating an execution records performer and arguments" do
     assert_difference -> { MoActions::Execution.count }, 1 do
-      post mo_actions.run_action_path("capturing_args_test"), params: {
+      post mo_actions.executions_path, params: {
+        action_key: "capturing_args_test",
         arguments: { label: "hello", count: "3", enabled: "1" }
       }
     end
@@ -125,10 +136,10 @@ class DashboardTest < ActionDispatch::IntegrationTest
 
   test "perform raising records a failed execution and flashes an alert" do
     assert_difference -> { MoActions::Execution.count }, 1 do
-      post mo_actions.run_action_path("failing_test")
+      post mo_actions.executions_path, params: { action_key: "failing_test" }
     end
 
-    assert_redirected_to mo_actions.root_path
+    assert_redirected_to mo_actions.executions_path(action_key: "failing_test")
     follow_redirect!
     assert_select "p.alert", "Failing Test failed: boom"
 
@@ -139,7 +150,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
     assert_equal @user, execution.performer
   end
 
-  test "dashboard lists recent executions" do
+  test "executions index lists recent runs for all actions" do
     MoActions::Execution.create!(
       action_key: "counting_test",
       status: "succeeded",
@@ -154,48 +165,57 @@ class DashboardTest < ActionDispatch::IntegrationTest
       error_message: "boom"
     )
 
-    get mo_actions.root_path
+    get mo_actions.executions_path
 
     assert_response :success
-    assert_select "section.recent-executions" do
-      assert_select "h2", "Recent executions"
-      assert_select "td", "Counting Test"
-      assert_select "td", "succeeded"
-      assert_select "td", "Failing Test"
-      assert_select "td", "failed"
-      assert_select "td", "Operator"
-    end
+    assert_select "h1", "Executions"
+    assert_select "td", "Counting Test"
+    assert_select "td", "succeeded"
+    assert_select "td", "Failing Test"
+    assert_select "td", "failed"
+    assert_select "td", "Operator"
   end
 
-  test "blank required argument re-renders errors and skips perform and persistence" do
+  test "executions index filters by action_key" do
+    MoActions::Execution.create!(action_key: "counting_test", status: "succeeded", arguments: {})
+    MoActions::Execution.create!(action_key: "failing_test", status: "failed", arguments: {})
+
+    get mo_actions.executions_path, params: { action_key: "counting_test" }
+
+    assert_response :success
+    assert_select "td", "Counting Test"
+    assert_select "td", text: "Failing Test", count: 0
+    assert_select "a[href=?]", mo_actions.new_execution_path(action_key: "counting_test"), text: /Run Counting Test/
+  end
+
+  test "blank required argument re-renders run page errors and skips persistence" do
     assert_no_difference -> { MoActions::Execution.count } do
-      post mo_actions.run_action_path("send_invoice_reminders"), params: {
+      post mo_actions.executions_path, params: {
+        action_key: "send_invoice_reminders",
         arguments: { days_overdue: "" }
       }
     end
 
     assert_response :unprocessable_entity
+    assert_select "h1", "Run Send Invoice Reminders"
     assert_select "p.alert", "Please fix the errors below."
-    assert_select "form[action=?]", mo_actions.run_action_path("send_invoice_reminders") do
-      assert_select "span.error", /Days overdue can't be blank/
-    end
+    assert_select "span.error", /Days overdue can't be blank/
   end
 
-  test "non-numeric integer argument re-renders errors and skips persistence" do
+  test "non-numeric integer argument re-renders run page errors and skips persistence" do
     CapturingArgsTestAction.last_values = nil
 
     assert_no_difference -> { MoActions::Execution.count } do
-      post mo_actions.run_action_path("capturing_args_test"), params: {
+      post mo_actions.executions_path, params: {
+        action_key: "capturing_args_test",
         arguments: { label: "hello", count: "abc", enabled: "1" }
       }
     end
 
     assert_response :unprocessable_entity
     assert_nil CapturingArgsTestAction.last_values
-    assert_select "form[action=?]", mo_actions.run_action_path("capturing_args_test") do
-      assert_select "input[name='arguments[label]'][value=hello]"
-      assert_select "input[name='arguments[count]'][value=abc]"
-      assert_select "span.error", /Count is not a number/
-    end
+    assert_select "input[name='arguments[label]'][value=hello]"
+    assert_select "input[name='arguments[count]'][value=abc]"
+    assert_select "span.error", /Count is not a number/
   end
 end

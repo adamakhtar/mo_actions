@@ -30,10 +30,11 @@ class DashboardAuthTest < ActionDispatch::IntegrationTest
     assert_select "h1", "Mo Actions"
     assert_select "p.performer", "Signed in as Ada"
 
-    post mo_actions.run_action_path("send_invoice_reminders"), params: {
+    post mo_actions.executions_path, params: {
+      action_key: "send_invoice_reminders",
       arguments: { days_overdue: "7" }
     }
-    assert_redirected_to mo_actions.root_path
+    assert_redirected_to mo_actions.executions_path(action_key: "send_invoice_reminders")
   end
 
   test "current_performer resolves via the configured callable" do

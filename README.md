@@ -46,7 +46,8 @@ MoActions.configure do |config|
 end
 ```
 
-Without `authenticate_with`, the dashboard rejects requests with 403. Visiting the dashboard lists registered actions grouped by category. Argument-free actions get a one-click Run button; actions with `argument` declarations get a generated form. Submitted arguments are validated with ActiveModel (`required:` → presence, integers → numericality) before `perform`; invalid runs re-render field errors and create no execution. Valid runs invoke `perform` synchronously with coerced values, persist an execution record (key, arguments, performer, succeeded/failed), and list recent executions on the dashboard.
+Without `authenticate_with`, the dashboard rejects requests with 403. The actions index lists registered actions with a Run link (to a dedicated run page) and an Executions link (history filtered by that action). The run page validates arguments with ActiveModel (`required:` → presence, integers → numericality) before `perform`; invalid submissions re-render field errors and create no execution. Valid runs invoke `perform` synchronously, persist an execution, and redirect to the executions index. Executions index lists recent runs for all actions and can filter by action key.
+
 
 Copy engine migrations after install:
 

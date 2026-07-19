@@ -1,0 +1,42 @@
+<h1>Run <%= @action_class.display_name %></h1>
+
+<p><%= link_to "← Actions", root_path %></p>
+
+<% if @action_class.description %>
+  <p><%= @action_class.description %></p>
+<% end %>
+
+<%= form_with url: executions_path, method: :post do %>
+  <%= hidden_field_tag :action_key, @action_class.key %>
+
+  <% if @action_class.arguments.any? %>
+    <% @action_class.arguments.each do |argument| %>
+      <% field_id = "arguments_#{argument.name}" %>
+      <% submitted = @action.public_send(argument.name) %>
+      <p>
+        <%= label_tag field_id, argument.name.to_s.humanize %>
+        <% if argument.required? %>
+          <span class="required">*</span>
+        <% end %>
+        <% if argument.description %>
+          <span class="argument-description"><%= argument.description %></span>
+        <% end %>
+        <% case argument.type %>
+        <% when :boolean %>
+          <%= check_box_tag "arguments[#{argument.name}]", "1", submitted == true || submitted.to_s == "1" %>
+        <% when :integer %>
+          <%= number_field_tag "arguments[#{argument.name}]", submitted, id: field_id %>
+        <% else %>
+          <%= text_field_tag "arguments[#{argument.name}]", submitted, id: field_id %>
+        <% end %>
+        <% if @action.errors.include?(argument.name) %>
+          <span class="error"><%= @action.errors.full_messages_for(argument.name).to_sentence %></span>
+        <% end %>
+      </p>
+    <% end %>
+  <% else %>
+    <p>This action has no arguments.</p>
+  <% end %>
+
+  <%= submit_tag "Run" %>
+<% end %>

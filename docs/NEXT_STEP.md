@@ -6,9 +6,9 @@ Add a read-only execution detail page so operators can open a past run and see i
 
 ## In scope
 
-- Route + `MoActions::ExecutionsController#show` for a single execution
+- `ExecutionsController#show` + route
 - Detail view: action name/key, status, performer, arguments, error message (when failed), timestamps
-- Link each row in the recent-executions table to its detail page
+- Link each row on the executions index to its detail page
 - Graceful render when the action key is no longer registered (show raw key)
 - Tests for show content (succeeded and failed) and unknown id → 404
 
@@ -22,6 +22,6 @@ Add a read-only execution detail page so operators can open a past run and see i
 
 ## Done when
 
-- Operators can open a past execution from the dashboard list and see its recorded fields.
+- Operators can open a past execution from the executions index and see its recorded fields.
 - Missing executions 404.
 - Full suite green.
