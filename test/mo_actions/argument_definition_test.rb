@@ -19,9 +19,17 @@ module MoActions
       assert_nil integer.cast(nil)
       assert_nil integer.cast("")
       # Rails' integer type uses to_i, so non-numeric strings become 0.
+      # Validation rejects these before cast — see ArgumentDslTest.
       assert_equal 0, integer.cast("abc")
     end
 
+    test "required defaults to false and can be enabled" do
+      optional = ArgumentDefinition.new(name: :label, type: :string)
+      required = ArgumentDefinition.new(name: :label, type: :string, required: true)
+
+      assert_not optional.required?
+      assert required.required?
+    end
 
     test "rejects unsupported types" do
       error = assert_raises(ArgumentError) do

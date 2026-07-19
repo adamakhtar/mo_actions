@@ -19,15 +19,18 @@ class CapturingArgsTestAction < MoActions::Base
   display_name "Capturing Args Test"
   category :testing
 
-  argument :label, type: :string
+  argument :label, type: :string, required: true
   argument :count, type: :integer
   argument :enabled, type: :boolean
 
   class << self
     attr_accessor :last_values
+    attr_accessor :performed_count
   end
+  self.performed_count = 0
 
   def perform
+    self.class.performed_count += 1
     self.class.last_values = { label: label, count: count, enabled: enabled }
   end
 end
@@ -88,6 +91,37 @@ class DashboardTest < ActionDispatch::IntegrationTest
       { label: "hello", count: 3, enabled: true },
       CapturingArgsTestAction.last_values
     )
+  end
+
+  test "blank required argument re-renders with field error and does not run" do
+    CapturingArgsTestAction.performed_count = 0
+
+    assert_no_difference -> { MoActions::Execution.count } do
+      post mo_actions.run_action_path("capturing_args_test"), params: {
+        arguments: { label: "", count: "3" }
+      }
+    end
+
+    assert_response :unprocessable_entity
+    assert_equal 0, CapturingArgsTestAction.performed_count
+    assert_select ".field-with-errors .field-error", /Label can't be blank/
+    assert_select "input[name='arguments[count]'][value=3]"
+  end
+
+  test "non-integer argument re-renders with field error and does not run" do
+    CapturingArgsTestAction.performed_count = 0
+
+    assert_no_difference -> { MoActions::Execution.count } do
+      post mo_actions.run_action_path("capturing_args_test"), params: {
+        arguments: { label: "hello", count: "abc" }
+      }
+    end
+
+    assert_response :unprocessable_entity
+    assert_equal 0, CapturingArgsTestAction.performed_count
+    assert_select ".field-with-errors .field-error", /Count/
+    assert_select "input[name='arguments[label]'][value=hello]"
+    assert_select "input[name='arguments[count]'][value=abc]"
   end
 
   test "running an argument-free action invokes its perform method" do

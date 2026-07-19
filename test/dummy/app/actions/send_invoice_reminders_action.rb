@@ -3,7 +3,7 @@ class SendInvoiceRemindersAction < MoActions::Base
   description "Emails a reminder to every customer with an overdue invoice."
   category :billing
 
-  argument :days_overdue, type: :integer, description: "Only remind for invoices at least this many days overdue"
+  argument :days_overdue, type: :integer, required: true, description: "Only remind for invoices at least this many days overdue"
   argument :dry_run, type: :boolean, description: "Log what would be sent without emailing"
 
   def perform

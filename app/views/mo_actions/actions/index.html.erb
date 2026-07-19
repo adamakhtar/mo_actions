@@ -9,6 +9,7 @@
     <h2><%= category.to_s.humanize %></h2>
     <ul>
       <% actions.each do |action| %>
+        <% submitted = @invalid_action if @invalid_action&.class == action %>
         <li>
           <strong><%= action.display_name %></strong>
           <% if action.description %>
@@ -18,18 +19,27 @@
           <% if action.arguments.any? %>
             <%= form_with url: run_action_path(action.key), method: :post do %>
               <% action.arguments.each do |argument| %>
-                <p>
-                  <%= label_tag "arguments_#{argument.name}", argument.name.to_s.humanize %>
+                <% field_id = "arguments_#{argument.name}" %>
+                <% value = submitted&.public_send(argument.name) %>
+                <% errors = submitted&.errors&.[](argument.name) || [] %>
+                <p class="<%= "field-with-errors" if errors.any? %>">
+                  <%= label_tag field_id, argument.name.to_s.humanize %>
+                  <% if argument.required? %>
+                    <span class="required">*</span>
+                  <% end %>
                   <% if argument.description %>
                     <span class="argument-description"><%= argument.description %></span>
                   <% end %>
                   <% case argument.type %>
                   <% when :boolean %>
-                    <%= check_box_tag "arguments[#{argument.name}]", "1", false %>
+                    <%= check_box_tag "arguments[#{argument.name}]", "1", value.present? && value != false && value != "0" %>
                   <% when :integer %>
-                    <%= number_field_tag "arguments[#{argument.name}]" %>
+                    <%= number_field_tag "arguments[#{argument.name}]", value %>
                   <% else %>
-                    <%= text_field_tag "arguments[#{argument.name}]" %>
+                    <%= text_field_tag "arguments[#{argument.name}]", value %>
+                  <% end %>
+                  <% errors.each do |message| %>
+                    <span class="field-error"><%= argument.name.to_s.humanize %> <%= message %></span>
                   <% end %>
                 </p>
               <% end %>

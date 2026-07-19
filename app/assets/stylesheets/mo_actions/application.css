@@ -13,3 +13,16 @@
  *= require_tree .
  *= require_self
  */
+
+.field-error {
+  display: block;
+  color: #a40000;
+}
+
+.field-with-errors input {
+  border-color: #a40000;
+}
+
+.required {
+  color: #a40000;
+}
