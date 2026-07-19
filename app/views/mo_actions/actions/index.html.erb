@@ -8,35 +8,44 @@
   <section>
     <h2><%= category.to_s.humanize %></h2>
     <ul>
-      <% actions.each do |action| %>
+      <% actions.each do |action_class| %>
+        <% invalid = @invalid_action if @invalid_action&.class == action_class %>
         <li>
-          <strong><%= action.display_name %></strong>
-          <% if action.description %>
-            <p><%= action.description %></p>
+          <strong><%= action_class.display_name %></strong>
+          <% if action_class.description %>
+            <p><%= action_class.description %></p>
           <% end %>
 
-          <% if action.arguments.any? %>
-            <%= form_with url: run_action_path(action.key), method: :post do %>
-              <% action.arguments.each do |argument| %>
+          <% if action_class.arguments.any? %>
+            <%= form_with url: run_action_path(action_class.key), method: :post do %>
+              <% action_class.arguments.each do |argument| %>
+                <% field_id = "arguments_#{argument.name}" %>
+                <% submitted = invalid&.public_send(argument.name) %>
                 <p>
-                  <%= label_tag "arguments_#{argument.name}", argument.name.to_s.humanize %>
+                  <%= label_tag field_id, argument.name.to_s.humanize %>
+                  <% if argument.required? %>
+                    <span class="required">*</span>
+                  <% end %>
                   <% if argument.description %>
                     <span class="argument-description"><%= argument.description %></span>
                   <% end %>
                   <% case argument.type %>
                   <% when :boolean %>
-                    <%= check_box_tag "arguments[#{argument.name}]", "1", false %>
+                    <%= check_box_tag "arguments[#{argument.name}]", "1", submitted == true || submitted == "1" %>
                   <% when :integer %>
-                    <%= number_field_tag "arguments[#{argument.name}]" %>
+                    <%= number_field_tag "arguments[#{argument.name}]", submitted, id: field_id %>
                   <% else %>
-                    <%= text_field_tag "arguments[#{argument.name}]" %>
+                    <%= text_field_tag "arguments[#{argument.name}]", submitted, id: field_id %>
+                  <% end %>
+                  <% if invalid&.errors&.include?(argument.name) %>
+                    <span class="error"><%= invalid.errors.full_messages_for(argument.name).to_sentence %></span>
                   <% end %>
                 </p>
               <% end %>
               <%= submit_tag "Run" %>
             <% end %>
           <% else %>
-            <%= button_to "Run", run_action_path(action.key) %>
+            <%= button_to "Run", run_action_path(action_class.key) %>
           <% end %>
         </li>
       <% end %>

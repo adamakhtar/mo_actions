@@ -6,14 +6,16 @@ module MoActions
   #     description "Imports users from the nightly CSV export."
   #     category :billing
   #
-  #     argument :source, type: :string
+  #     argument :source, type: :string, required: true
   #     argument :notify, type: :boolean, description: "Email ops when done"
   #
   #     def perform
-  #       # source, notify available as readers
+  #       # source, notify available as readers (coerced after validation)
   #     end
   #   end
   class Base
+    include ActiveModel::Model
+
     class << self
       def inherited(subclass)
         super
@@ -43,11 +45,24 @@ module MoActions
           "#{name} has no category. Declare one with `category :some_category`."
       end
 
-      def argument(name, type: :string, description: nil)
-        definition = ArgumentDefinition.new(name: name, type: type, description: description)
+      def argument(name, type: :string, description: nil, required: false)
+        definition = ArgumentDefinition.new(
+          name: name,
+          type: type,
+          description: description,
+          required: required
+        )
         arguments.reject! { |existing| existing.name == definition.name }
         arguments << definition
-        attr_reader definition.name
+        attr_accessor definition.name
+
+        # Rails validators — declared at definition time so hosts get normal
+        # ActiveModel errors/I18n. Values are still raw here; cast after valid?
+        validates definition.name, presence: true if definition.required?
+
+        if definition.type == :integer
+          validates definition.name, numericality: { only_integer: true }, allow_blank: true
+        end
       end
 
       def arguments
@@ -55,18 +70,20 @@ module MoActions
       end
     end
 
-    def initialize(raw_arguments = {})
-      raw = raw_arguments.to_h.with_indifferent_access
-      self.class.arguments.each do |definition|
-        instance_variable_set(:"@#{definition.name}", definition.cast(raw[definition.name]))
-      end
-    end
-
     # Coerced argument values keyed by name (string), suitable for persistence.
+    # Call after +cast_arguments!+.
     def argument_values
       self.class.arguments.each_with_object({}) do |definition, hash|
         hash[definition.name.to_s] = public_send(definition.name)
       end
+    end
+
+    # Apply ActiveModel::Type casts in place. Run only after +valid?+.
+    def cast_arguments!
+      self.class.arguments.each do |definition|
+        public_send("#{definition.name}=", definition.cast(public_send(definition.name)))
+      end
+      self
     end
 
     def perform

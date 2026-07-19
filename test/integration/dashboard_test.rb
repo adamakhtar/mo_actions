@@ -166,4 +166,36 @@ class DashboardTest < ActionDispatch::IntegrationTest
       assert_select "td", "Operator"
     end
   end
+
+  test "blank required argument re-renders errors and skips perform and persistence" do
+    assert_no_difference -> { MoActions::Execution.count } do
+      post mo_actions.run_action_path("send_invoice_reminders"), params: {
+        arguments: { days_overdue: "" }
+      }
+    end
+
+    assert_response :unprocessable_entity
+    assert_select "p.alert", "Please fix the errors below."
+    assert_select "form[action=?]", mo_actions.run_action_path("send_invoice_reminders") do
+      assert_select "span.error", /Days overdue can't be blank/
+    end
+  end
+
+  test "non-numeric integer argument re-renders errors and skips persistence" do
+    CapturingArgsTestAction.last_values = nil
+
+    assert_no_difference -> { MoActions::Execution.count } do
+      post mo_actions.run_action_path("capturing_args_test"), params: {
+        arguments: { label: "hello", count: "abc", enabled: "1" }
+      }
+    end
+
+    assert_response :unprocessable_entity
+    assert_nil CapturingArgsTestAction.last_values
+    assert_select "form[action=?]", mo_actions.run_action_path("capturing_args_test") do
+      assert_select "input[name='arguments[label]'][value=hello]"
+      assert_select "input[name='arguments[count]'][value=abc]"
+      assert_select "span.error", /Count is not a number/
+    end
+  end
 end

@@ -1,13 +1,22 @@
 module MoActions
   class ActionsController < ApplicationController
     def index
-      @actions_by_category = Registry.by_category
-      @recent_executions = Execution.recent.limit(20)
+      load_index
     end
 
     def run
       action_class = Registry.find(params[:key])
       action = action_class.new(argument_params(action_class))
+
+      unless action.valid?
+        load_index
+        @invalid_action = action
+        flash.now[:alert] = "Please fix the errors below."
+        render :index, status: :unprocessable_entity
+        return
+      end
+
+      action.cast_arguments!
 
       status = "succeeded"
       error_message = nil
@@ -31,6 +40,11 @@ module MoActions
     end
 
     private
+
+    def load_index
+      @actions_by_category = Registry.by_category
+      @recent_executions = Execution.recent.limit(20)
+    end
 
     def argument_params(action_class)
       keys = action_class.arguments.map(&:name)

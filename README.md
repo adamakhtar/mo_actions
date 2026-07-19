@@ -12,7 +12,7 @@ class SendInvoiceRemindersAction < MoActions::Base
   description "Emails a reminder to every customer with an overdue invoice."
   category :billing
 
-  argument :days_overdue, type: :integer, description: "Minimum days overdue"
+  argument :days_overdue, type: :integer, required: true, description: "Minimum days overdue"
   argument :dry_run, type: :boolean
 
   def perform
@@ -46,7 +46,7 @@ MoActions.configure do |config|
 end
 ```
 
-Without `authenticate_with`, the dashboard rejects requests with 403. Visiting the dashboard lists registered actions grouped by category. Argument-free actions get a one-click Run button; actions with `argument` declarations get a generated form. Run invokes `perform` synchronously with coerced values on the instance, persists an execution record (key, arguments, performer, succeeded/failed), and lists recent executions on the dashboard.
+Without `authenticate_with`, the dashboard rejects requests with 403. Visiting the dashboard lists registered actions grouped by category. Argument-free actions get a one-click Run button; actions with `argument` declarations get a generated form. Submitted arguments are validated with ActiveModel (`required:` → presence, integers → numericality) before `perform`; invalid runs re-render field errors and create no execution. Valid runs invoke `perform` synchronously with coerced values, persist an execution record (key, arguments, performer, succeeded/failed), and list recent executions on the dashboard.
 
 Copy engine migrations after install:
 

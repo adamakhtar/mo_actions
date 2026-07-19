@@ -30,7 +30,9 @@ class DashboardAuthTest < ActionDispatch::IntegrationTest
     assert_select "h1", "Mo Actions"
     assert_select "p.performer", "Signed in as Ada"
 
-    post mo_actions.run_action_path("send_invoice_reminders")
+    post mo_actions.run_action_path("send_invoice_reminders"), params: {
+      arguments: { days_overdue: "7" }
+    }
     assert_redirected_to mo_actions.root_path
   end
 

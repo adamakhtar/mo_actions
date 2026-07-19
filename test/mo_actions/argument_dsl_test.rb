@@ -18,7 +18,7 @@ module MoActions
       assert_equal "Who to notify", definitions.first.description
     end
 
-    test "initialize coerces params onto instance readers" do
+    test "initialize keeps raw params until cast_arguments!" do
       action = ReminderArgsTestAction.new(
         "email" => "ops@example.com",
         "limit" => "10",
@@ -26,21 +26,52 @@ module MoActions
       )
 
       assert_equal "ops@example.com", action.email
+      assert_equal "10", action.limit
+      assert_equal "1", action.dry_run
+
+      assert action.valid?
+      action.cast_arguments!
+
+      assert_equal "ops@example.com", action.email
       assert_equal 10, action.limit
       assert_equal true, action.dry_run
     end
 
-    test "argument_values returns coerced values keyed by name" do
+    test "argument_values returns coerced values keyed by name after cast_arguments!" do
       action = ReminderArgsTestAction.new(
         email: "ops@example.com",
         limit: "10",
         dry_run: "0"
       )
+      assert action.valid?
+      action.cast_arguments!
 
       assert_equal(
         { "email" => "ops@example.com", "limit" => 10, "dry_run" => false },
         action.argument_values
       )
+    end
+
+    test "required arguments use ActiveModel presence validation" do
+      klass = Class.new(MoActions::Base) do
+        def self.name = "RequiredArgAction"
+        category :testing
+        argument :label, type: :string, required: true
+        def perform; end
+      end
+
+      action = klass.new(label: "")
+      assert_not action.valid?
+      assert_includes action.errors[:label], "can't be blank"
+    end
+
+    test "integer arguments use ActiveModel numericality validation on raw input" do
+      action = ReminderArgsTestAction.new(limit: "abc")
+      assert_not action.valid?
+      assert_includes action.errors[:limit], "is not a number"
+
+      action = ReminderArgsTestAction.new(limit: "10")
+      assert action.valid?
     end
 
     test "redeclaring an argument replaces the previous definition" do
