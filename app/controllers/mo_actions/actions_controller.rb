@@ -7,26 +7,19 @@ module MoActions
 
     def run
       action_class = Registry.find(params[:key])
-      raw_arguments = argument_params(action_class)
-      instance = action_class.new(raw_arguments)
-      stored_arguments = serialize_arguments(instance)
+      action = action_class.new(argument_params(action_class))
 
       status = "succeeded"
       error_message = nil
 
       begin
-        instance.perform
+        action.perform
       rescue => error
         status = "failed"
         error_message = error.message
       end
 
-      record_execution!(
-        action_class,
-        stored_arguments,
-        status: status,
-        error_message: error_message
-      )
+      record_execution!(action, status: status, error_message: error_message)
 
       if status == "succeeded"
         redirect_to root_path, notice: "#{action_class.display_name} ran successfully."
@@ -46,16 +39,10 @@ module MoActions
       params.fetch(:arguments, {}).permit(*keys).to_h
     end
 
-    def serialize_arguments(instance)
-      instance.class.arguments.each_with_object({}) do |definition, hash|
-        hash[definition.name.to_s] = instance.public_send(definition.name)
-      end
-    end
-
-    def record_execution!(action_class, arguments, status:, error_message: nil)
+    def record_execution!(action, status:, error_message: nil)
       Execution.create!(
-        action_key: action_class.key,
-        arguments: arguments,
+        action_key: action.class.key,
+        arguments: action.argument_values,
         performer: current_performer,
         status: status,
         error_message: error_message

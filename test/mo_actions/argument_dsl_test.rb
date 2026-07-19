@@ -30,6 +30,19 @@ module MoActions
       assert_equal true, action.dry_run
     end
 
+    test "argument_values returns coerced values keyed by name" do
+      action = ReminderArgsTestAction.new(
+        email: "ops@example.com",
+        limit: "10",
+        dry_run: "0"
+      )
+
+      assert_equal(
+        { "email" => "ops@example.com", "limit" => 10, "dry_run" => false },
+        action.argument_values
+      )
+    end
+
     test "redeclaring an argument replaces the previous definition" do
       with_isolated_registry do
         klass = Class.new(MoActions::Base) do
