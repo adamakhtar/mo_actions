@@ -15,6 +15,23 @@ class CountingTestAction < MoActions::Base
   end
 end
 
+class CapturingArgsTestAction < MoActions::Base
+  display_name "Capturing Args Test"
+  category :testing
+
+  argument :label, type: :string
+  argument :count, type: :integer
+  argument :enabled, type: :boolean
+
+  class << self
+    attr_accessor :last_values
+  end
+
+  def perform
+    self.class.last_values = { label: label, count: count, enabled: enabled }
+  end
+end
+
 class DashboardTest < ActionDispatch::IntegrationTest
   setup do
     @user = User.create!(name: "Operator")
@@ -32,13 +49,39 @@ class DashboardTest < ActionDispatch::IntegrationTest
     assert_select "li", /Purge Stale Sessions/
   end
 
-  test "each action has a run button" do
+  test "argument-free actions keep a one-click run button" do
     get mo_actions.root_path
 
-    assert_select "form[action=?][method=post]", mo_actions.run_action_path("send_invoice_reminders")
+    assert_select "form[action=?][method=post]", mo_actions.run_action_path("purge_stale_sessions") do
+      assert_select "button", "Run"
+      assert_select "input[name^=arguments]", count: 0
+    end
   end
 
-  test "running an action invokes its perform method" do
+
+  test "actions with arguments render a form with typed fields" do
+    get mo_actions.root_path
+
+    assert_select "form[action=?][method=post]", mo_actions.run_action_path("send_invoice_reminders") do
+      assert_select "input[name='arguments[days_overdue]'][type=number]"
+      assert_select "input[name='arguments[dry_run]'][type=checkbox]"
+      assert_select "input[type=submit][value=Run]"
+    end
+  end
+
+  test "running an action with arguments passes coerced values into perform" do
+    post mo_actions.run_action_path("capturing_args_test"), params: {
+      arguments: { label: "hello", count: "3", enabled: "1" }
+    }
+
+    assert_redirected_to mo_actions.root_path
+    assert_equal(
+      { label: "hello", count: 3, enabled: true },
+      CapturingArgsTestAction.last_values
+    )
+  end
+
+  test "running an argument-free action invokes its perform method" do
     assert_difference -> { CountingTestAction.performed_count } do
       post mo_actions.run_action_path("counting_test")
     end

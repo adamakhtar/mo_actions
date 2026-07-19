@@ -14,7 +14,30 @@
           <% if action.description %>
             <p><%= action.description %></p>
           <% end %>
-          <%= button_to "Run", run_action_path(action.key) %>
+
+          <% if action.arguments.any? %>
+            <%= form_with url: run_action_path(action.key), method: :post do %>
+              <% action.arguments.each do |argument| %>
+                <p>
+                  <%= label_tag "arguments_#{argument.name}", argument.name.to_s.humanize %>
+                  <% if argument.description %>
+                    <span class="argument-description"><%= argument.description %></span>
+                  <% end %>
+                  <% case argument.type %>
+                  <% when :boolean %>
+                    <%= check_box_tag "arguments[#{argument.name}]", "1", false %>
+                  <% when :integer %>
+                    <%= number_field_tag "arguments[#{argument.name}]" %>
+                  <% else %>
+                    <%= text_field_tag "arguments[#{argument.name}]" %>
+                  <% end %>
+                </p>
+              <% end %>
+              <%= submit_tag "Run" %>
+            <% end %>
+          <% else %>
+            <%= button_to "Run", run_action_path(action.key) %>
+          <% end %>
         </li>
       <% end %>
     </ul>

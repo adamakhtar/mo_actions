@@ -6,8 +6,11 @@ module MoActions
   #     description "Imports users from the nightly CSV export."
   #     category :billing
   #
+  #     argument :source, type: :string
+  #     argument :notify, type: :boolean, description: "Email ops when done"
+  #
   #     def perform
-  #       # ...
+  #       # source, notify available as readers
   #     end
   #   end
   class Base
@@ -38,6 +41,24 @@ module MoActions
         @category = value.to_sym if value
         @category or raise MoActions::MissingCategory,
           "#{name} has no category. Declare one with `category :some_category`."
+      end
+
+      def argument(name, type: :string, description: nil)
+        definition = ArgumentDefinition.new(name: name, type: type, description: description)
+        arguments.reject! { |existing| existing.name == definition.name }
+        arguments << definition
+        attr_reader definition.name
+      end
+
+      def arguments
+        @arguments ||= []
+      end
+    end
+
+    def initialize(raw_arguments = {})
+      raw = raw_arguments.to_h.with_indifferent_access
+      self.class.arguments.each do |definition|
+        instance_variable_set(:"@#{definition.name}", definition.cast(raw[definition.name]))
       end
     end
 

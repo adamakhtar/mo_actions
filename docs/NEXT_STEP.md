@@ -2,28 +2,26 @@
 
 ## Goal
 
-Add a typed argument DSL on actions so operators can supply inputs before a run (still synchronous, still no persistence).
+Persist a simple execution record for each dashboard run so operators can see what ran, with which arguments, and by whom.
 
 ## In scope
 
-- Argument declaration on `MoActions::Base` (e.g. `argument :email, type: :string`)
-- A small set of scalar types (`string`, `integer`, `boolean` — expand only if a dummy action needs more)
-- Generated run form on the dashboard for actions that declare arguments
-- Passing submitted params into the action instance before `#perform` (light coercion to the declared type is fine)
-- Tests for DSL, form rendering, and runs that receive the submitted values
+- Engine migration + `MoActions::Execution` model (action key, performer reference, arguments jsonb/json, status, timestamps)
+- Create a record when the dashboard runs an action (sync `perform` still; mark succeeded/failed around the call)
+- Index list of recent executions on the dashboard (below the action list is fine)
+- Capture `current_performer` when present (polymorphic or type+id; keep it small)
+- Tests for record creation on run, failure status when `perform` raises, and index rendering
 
 ## Out of scope
 
-- Validation of required/typed args (required flags, flash errors, blocking invalid runs) — do later
-- File uploads / ActiveStorage
-- Persistence / execution records / drafts
-- Async execution, progress, logs
-- Per-action authorization rules
-- Batching, preflight, audit trail, retention
-- Nested/composite argument types
+- Argument validation (required/typed errors, blocking invalid runs)
+- Drafts / edit-before-run flow
+- Async execution, progress, logs, batching
+- Preflight, authorization rules, audit export, retention/cleanup
+- Re-run from a past execution
 
 ## Done when
 
-- An action with arguments shows a form; submitting values runs `perform` with those values available on the instance.
-- Argument-free actions keep the existing one-click Run behavior.
+- Running an action from the dashboard creates an execution record with key, arguments, performer, and success/failure status.
+- The dashboard shows recent executions.
 - Full suite green.
