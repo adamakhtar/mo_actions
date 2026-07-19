@@ -1,0 +1,44 @@
+---
+description: Follow the stair-step agent process — decide vs build are separate
+alwaysApply: true
+---
+
+# Mo Actions agent process
+
+Follow `docs/AGENT_PROCESS.md`. **Decide** and **build** are separate modes — never invent the following slice while implementing the current one.
+
+## Mode selection
+
+| User intent | Mode | Do |
+| --- | --- | --- |
+| "what's next?", "what should we build next?", "decide the next step/slice", "propose next" | **Decide** | Update `docs/NEXT_STEP.md` only. No feature code. |
+| "build the next feature/step/slice", "implement it", "build it", "continue building" | **Build** | Implement exactly the current `docs/NEXT_STEP.md`. |
+
+If they only ask what to build next → **decide**, do not code.  
+If they ask to build but `NEXT_STEP.md` is missing, already done, or stale vs `main` → **do not invent scope in build mode**; decide first (or tell them), then wait for an explicit build unless they clearly asked for both.
+
+## Decide mode
+
+1. Read `docs/AGENT_PROCESS.md`, `PRODUCT_DIRECTION.md`, `WORKING_STATE.md`, `NEXT_STEP.md`
+2. Check `main` / recent merges so you do not re-propose shipped work
+3. Write exactly one next slice into `NEXT_STEP.md` (goal, in/out of scope, done criteria)
+4. Do not implement
+
+## Build mode
+
+1. Read the same docs; confirm `NEXT_STEP.md` is still the undone slice on `main`
+2. Build **only** that slice
+3. Before finishing, update `WORKING_STATE.md` for what now works
+4. Mark `NEXT_STEP.md` as **done / awaiting next decision** — do **not** write the following slice
+5. Update `PRODUCT_DIRECTION.md` only if intent changed
+
+Optional context for either mode: `TECHNICAL_REQUIREMENTS.md`, `ACCEPTANCE_CRITERIA.md`. Do not implement those wholesale.
+
+## Working rules (build)
+
+- Leave the gem working after every change
+- Smallest useful slice; simple models first
+- No future-phase infrastructure
+- Record non-obvious design choices in `WORKING_STATE.md`
+
+Build PR = one working slice + tests (when code changes) + docs reflecting reality.
