@@ -24,21 +24,26 @@ Mount the dashboard in `config/routes.rb`:
 mount MoActions::Engine => "/mo_actions"
 ```
 
-Visiting the dashboard lists all registered actions grouped by category, each with a Run button that invokes the action's `perform` method synchronously.
-
-## Installation
-
-Add this line to your application's Gemfile:
-
-```ruby
-gem "mo_actions"
-```
-
-And then execute:
+Install the initializer, then wire host authentication:
 
 ```bash
-$ bundle
+$ bin/rails g mo_actions:install
 ```
+
+```ruby
+# config/initializers/mo_actions.rb
+MoActions.configure do |config|
+  config.authenticate_with = ->(controller) do
+    controller.redirect_to "/login" unless controller.session[:user_id]
+  end
+
+  config.current_performer = ->(controller) do
+    User.find_by(id: controller.session[:user_id])
+  end
+end
+```
+
+Without `authenticate_with`, the dashboard rejects requests with 403. Visiting the dashboard lists registered actions grouped by category; Run invokes `perform` synchronously.
 
 ## Development
 

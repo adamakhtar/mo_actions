@@ -1,0 +1,11 @@
+<h1>Sign in</h1>
+
+<p>Trivial dummy-app auth for exercising Mo Actions.</p>
+
+<%= form_with url: "/login", method: :post do |f| %>
+  <p>
+    <%= label_tag :name, "Name" %>
+    <%= text_field_tag :name, "Ada" %>
+  </p>
+  <%= submit_tag "Sign in" %>
+<% end %>

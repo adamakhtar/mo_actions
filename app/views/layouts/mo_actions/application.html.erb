@@ -13,6 +13,7 @@
 
 <% if notice %><p class="notice"><%= notice %></p><% end %>
 <% if alert %><p class="alert"><%= alert %></p><% end %>
+<% if current_performer %><p class="performer">Signed in as <%= current_performer.try(:name) || current_performer %></p><% end %>
 
 <%= yield %>
 
