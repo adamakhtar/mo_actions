@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_19_180000) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_19_210000) do
   create_table "mo_actions_executions", force: :cascade do |t|
     t.string "action_key", null: false
     t.json "arguments", default: {}, null: false
@@ -18,6 +18,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_19_180000) do
     t.text "error_message"
     t.integer "performer_id"
     t.string "performer_type"
+    t.integer "progress_current", default: 0, null: false
+    t.integer "progress_total"
     t.string "status", null: false
     t.datetime "updated_at", null: false
     t.index ["action_key"], name: "index_mo_actions_executions_on_action_key"

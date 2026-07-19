@@ -34,7 +34,8 @@ class DashboardAuthTest < ActionDispatch::IntegrationTest
       action_key: "send_invoice_reminders",
       arguments: { days_overdue: "7" }
     }
-    assert_redirected_to mo_actions.executions_path(action_key: "send_invoice_reminders")
+    execution = MoActions::Execution.recent.first
+    assert_redirected_to mo_actions.execution_path(execution)
   end
 
   test "current_performer resolves via the configured callable" do

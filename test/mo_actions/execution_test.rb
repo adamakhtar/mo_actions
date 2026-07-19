@@ -7,9 +7,12 @@ class MoActions::ExecutionTest < ActiveSupport::TestCase
     assert_includes execution.errors[:action_key], "can't be blank"
 
     execution.action_key = "counting_test"
-    execution.status = "running"
+    execution.status = "queued"
     assert_not execution.valid?
     assert_includes execution.errors[:status], "is not included in the list"
+
+    execution.status = "running"
+    assert execution.valid?
   end
 
   test "recent scopes newest first" do
@@ -42,5 +45,18 @@ class MoActions::ExecutionTest < ActiveSupport::TestCase
 
     assert_equal user, execution.reload.performer
     assert_equal "User", execution.performer_type
+  end
+
+  test "progress_percent is nil without a positive total" do
+    execution = MoActions::Execution.new(progress_current: 2, progress_total: nil)
+    assert_nil execution.progress_percent
+
+    execution.progress_total = 0
+    assert_nil execution.progress_percent
+  end
+
+  test "progress_percent rounds from current over total" do
+    execution = MoActions::Execution.new(progress_current: 1, progress_total: 3)
+    assert_equal 33, execution.progress_percent
   end
 end

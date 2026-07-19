@@ -30,14 +30,9 @@ module MoActions
         return
       end
 
-      execution = @action.execution
-      if execution.succeeded?
-        redirect_to executions_path(action_key: @action_class.key),
-          notice: "#{@action_class.display_name} ran successfully."
-      else
-        redirect_to executions_path(action_key: @action_class.key),
-          alert: "#{@action_class.display_name} failed: #{execution.error_message}"
-      end
+      # Reload: with :inline adapter the job may already have finished.
+      execution = @action.execution.reload
+      redirect_to execution_path(execution), flash_for(execution)
     end
 
     private
@@ -65,6 +60,18 @@ module MoActions
 
       keys = @action_class.arguments.map { |argument| argument.name.to_s }
       (source.arguments || {}).slice(*keys)
+    end
+
+    def flash_for(execution)
+      name = @action_class.display_name
+      case execution.status
+      when "succeeded"
+        { notice: "#{name} ran successfully." }
+      when "failed"
+        { alert: "#{name} failed: #{execution.error_message}" }
+      else
+        { notice: "#{name} started." }
+      end
     end
   end
 end
