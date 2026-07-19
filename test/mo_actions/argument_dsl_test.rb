@@ -38,7 +38,7 @@ module MoActions
       assert_equal "ops@example.com", action.email
       assert_equal 10, action.limit
       assert_equal true, action.dry_run
-      assert action.execution.succeeded?
+      assert action.execution.reload.succeeded?
     end
 
     test "execute returns false when invalid and does not cast, perform, or persist" do
