@@ -223,6 +223,50 @@ class DashboardTest < ActionDispatch::IntegrationTest
     end
     assert_select ".error-message", count: 0
     assert_select "a[href=?]", mo_actions.executions_path, text: "← Executions"
+    assert_select "a[href=?]",
+      mo_actions.new_execution_path(action_key: "capturing_args_test", from_execution: execution.id),
+      text: "Run again"
+  end
+
+  test "run again prefills the new form from a past execution" do
+    execution = MoActions::Execution.create!(
+      action_key: "capturing_args_test",
+      status: "succeeded",
+      performer: @user,
+      arguments: { "label" => "hello", "count" => 3, "enabled" => true }
+    )
+
+    get mo_actions.new_execution_path(action_key: "capturing_args_test", from_execution: execution.id)
+
+    assert_response :success
+    assert_select "h1", "Run Capturing Args Test"
+    assert_select "input[name='arguments[label]'][value=hello]"
+    assert_select "input[name='arguments[count]'][value=3]"
+    assert_select "input[name='arguments[enabled]'][type=checkbox][checked=checked]"
+  end
+
+  test "submitting a run-again form creates a new execution and leaves the original unchanged" do
+    original = MoActions::Execution.create!(
+      action_key: "capturing_args_test",
+      status: "succeeded",
+      performer: @user,
+      arguments: { "label" => "hello", "count" => 3, "enabled" => true }
+    )
+    original_attributes = original.attributes
+
+    assert_difference -> { MoActions::Execution.count }, 1 do
+      post mo_actions.executions_path, params: {
+        action_key: "capturing_args_test",
+        arguments: { label: "hello", count: "3", enabled: "1" }
+      }
+    end
+
+    assert_redirected_to mo_actions.executions_path(action_key: "capturing_args_test")
+    assert_equal original_attributes, original.reload.attributes
+    assert_equal(
+      { label: "hello", count: 3, enabled: true },
+      CapturingArgsTestAction.last_values
+    )
   end
 
   test "execution show renders failed run error message" do
@@ -253,6 +297,7 @@ class DashboardTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "dd", /deleted_action/
     assert_select "dd .action-key", "(deleted_action)"
+    assert_select "a", text: "Run again", count: 0
   end
 
   test "unknown execution id returns 404" do

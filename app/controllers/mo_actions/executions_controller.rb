@@ -12,12 +12,13 @@ module MoActions
 
     def show
       @execution = Execution.find(params[:id])
+      @action_class = @execution.action_class
     rescue ActiveRecord::RecordNotFound
       head :not_found
     end
 
     def new
-      @action = @action_class.new
+      @action = @action_class.new(prefill_arguments)
     end
 
     def create
@@ -52,6 +53,18 @@ module MoActions
       return {} if keys.empty?
 
       params.fetch(:arguments, {}).permit(*keys).to_h
+    end
+
+    # Copy stored args from a past execution onto the run form ("Run again").
+    # Ignores missing/mismatched sources so a bare new form still works.
+    def prefill_arguments
+      return {} if params[:from_execution].blank?
+
+      source = Execution.find_by(id: params[:from_execution])
+      return {} unless source&.action_key == @action_class.key
+
+      keys = @action_class.arguments.map { |argument| argument.name.to_s }
+      (source.arguments || {}).slice(*keys)
     end
   end
 end
