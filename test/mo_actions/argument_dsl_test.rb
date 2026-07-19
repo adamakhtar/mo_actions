@@ -6,6 +6,8 @@ class ReminderArgsTestAction < MoActions::Base
   argument :email, type: :string, description: "Who to notify"
   argument :limit, type: :integer
   argument :dry_run, type: :boolean
+
+  def perform; end
 end
 
 module MoActions
@@ -18,7 +20,7 @@ module MoActions
       assert_equal "Who to notify", definitions.first.description
     end
 
-    test "initialize keeps raw params until cast_arguments!" do
+    test "initialize keeps raw params until execute casts them" do
       action = ReminderArgsTestAction.new(
         "email" => "ops@example.com",
         "limit" => "10",
@@ -29,23 +31,38 @@ module MoActions
       assert_equal "10", action.limit
       assert_equal "1", action.dry_run
 
-      assert action.valid?
-      action.cast_arguments!
+      assert action.execute
 
       assert_equal "ops@example.com", action.email
       assert_equal 10, action.limit
       assert_equal true, action.dry_run
     end
 
-    test "argument_values returns coerced values keyed by name after cast_arguments!" do
+    test "execute returns false when invalid and does not cast or perform" do
+      klass = Class.new(MoActions::Base) do
+        def self.name = "ExecuteGuardAction"
+        category :testing
+        argument :label, type: :string, required: true
+
+        def perform
+          raise "perform should not run"
+        end
+      end
+
+      action = klass.new(label: "")
+      assert_not action.execute
+      assert_equal "", action.label
+      assert_includes action.errors[:label], "can't be blank"
+    end
+
+    test "execute casts arguments then calls perform" do
       action = ReminderArgsTestAction.new(
         email: "ops@example.com",
         limit: "10",
         dry_run: "0"
       )
-      assert action.valid?
-      action.cast_arguments!
 
+      assert action.execute
       assert_equal(
         { "email" => "ops@example.com", "limit" => 10, "dry_run" => false },
         action.argument_values

@@ -10,9 +10,11 @@ module MoActions
   #     argument :notify, type: :boolean, description: "Email ops when done"
   #
   #     def perform
-  #       # source, notify available as readers (coerced after validation)
+  #       # source, notify available as cast readers after #execute
   #     end
   #   end
+  #
+  # Prefer +execute+ (validates, casts, then +perform+) over calling +perform+ directly.
   class Base
     include ActiveModel::Model
 
@@ -71,23 +73,33 @@ module MoActions
     end
 
     # Coerced argument values keyed by name (string), suitable for persistence.
-    # Call after +cast_arguments!+.
+    # Populated after a successful +execute+ (or +cast_arguments!+).
     def argument_values
       self.class.arguments.each_with_object({}) do |definition, hash|
         hash[definition.name.to_s] = public_send(definition.name)
       end
     end
 
-    # Apply ActiveModel::Type casts in place. Run only after +valid?+.
-    def cast_arguments!
-      self.class.arguments.each do |definition|
-        public_send("#{definition.name}=", definition.cast(public_send(definition.name)))
-      end
-      self
+    # Validate raw input, cast, then run +perform+.
+    # Returns false without casting or performing when invalid.
+    def execute
+      return false unless valid?
+
+      cast_arguments!
+      perform
+      true
     end
 
     def perform
       raise NotImplementedError, "#{self.class.name} must implement #perform"
+    end
+
+    private
+
+    def cast_arguments!
+      self.class.arguments.each do |definition|
+        public_send("#{definition.name}=", definition.cast(public_send(definition.name)))
+      end
     end
   end
 end

@@ -17,7 +17,7 @@
 
 - Engine table `mo_actions_executions` via installable migration under `db/migrate`. Dummy/test DB is SQLite (`json` column; PG can use the same migration).
 - `MoActions::Execution` is a thin AR model: `STATUSES = %w[succeeded failed]`, optional polymorphic `performer`, `recent` scope, `action_display_name` (registry lookup with key fallback).
-- `MoActions::Base` includes `ActiveModel::Model`. Argument DSL declares Rails validators at definition time. Instances keep raw submitted values until `cast_arguments!` (called only after `valid?`).
+- `MoActions::Base` includes `ActiveModel::Model`. Argument DSL declares Rails validators at definition time. Instances keep raw submitted values until `#execute` (validates → casts → `#perform`).
 - Gem code also lives in `lib/mo_actions/{base,registry,configuration,argument_definition,engine}.rb`.
 - `ArgumentDefinition#cast` delegates to `ActiveModel::Type.lookup` (string/integer/boolean). Requiredness is stored on the definition and enforced via ActiveModel presence.
 - `Registry.find` scans `all` by key rather than keeping a key-indexed hash — avoids stale-key problems when `key` is overridden after `inherited` registration, and is plenty fast for the expected action counts.
@@ -26,7 +26,7 @@
 
 - Used `display_name` in the DSL instead of `name` (as older plan docs suggested) to avoid shadowing `Class#name`, which Rails/Zeitwerk rely on.
 - Argument DSL uses keyword `type:` (`argument :email, type: :string`) rather than a positional type — reads clearly next to `description:` / `required:`.
-- Validation uses Rails' own `validates` / ActiveModel errors (presence + numericality). Raw input is validated first so integer numericality sees `"abc"` before `ActiveModel::Type::Integer` would coerce it to `0`.
+- Validation uses Rails' own `validates` / ActiveModel errors (presence + numericality). Raw input is validated first so integer numericality sees `"abc"` before `ActiveModel::Type::Integer` would coerce it to `0`. Public entry point is `#execute` (returns false if invalid); hosts implement `#perform` with already-cast readers.
 - `required:` defaults to `false` so existing optional args stay optional. Dummy `SendInvoiceRemindersAction` marks `days_overdue` required as the example.
 - Run UX lives on `executions#new` / `#create` (not the actions index) so validation errors have a dedicated page. Actions index only discovers actions and links out.
 - Executions index is the history surface: all actions, recent first, filterable by `action_key`. Filter by unregistered keys still lists matching rows (deleted actions); only new/create require a registered action.
@@ -47,7 +47,7 @@ Run with `bin/rails test` (green):
 - `test/mo_actions/registry_test.rb` — registration, find, unknown key, `by_category` grouping, reset/rebuild (dev-reload simulation).
 - `test/mo_actions/configuration_test.rb` — config defaults, setters, `reset_config!`.
 - `test/mo_actions/argument_definition_test.rb` — cast for string/integer/boolean, blank integer → nil, unsupported type error, required flag.
-- `test/mo_actions/argument_dsl_test.rb` — declaration order, raw then cast, `argument_values`, redeclare replaces, presence + numericality.
+- `test/mo_actions/argument_dsl_test.rb` — declaration order, `#execute` validate/cast/perform, redeclare replaces, presence + numericality.
 - `test/mo_actions/execution_test.rb` — validations, recent scope, polymorphic performer, display-name fallback.
 - `test/integration/dashboard_test.rb` — actions index links; run page forms; create with coerced args; unknown key 404; succeeded/failed persistence; executions index + action_key filter; validation 422 on run page.
 - `test/integration/dashboard_auth_test.rb` — unauthenticated redirect, default 403, session login + create, `current_performer` helper, symbol `authenticate_with`.

@@ -17,19 +17,15 @@ module MoActions
     def create
       @action = @action_class.new(argument_params)
 
-      unless @action.valid?
-        flash.now[:alert] = "Please fix the errors below."
-        render :new, status: :unprocessable_entity
-        return
-      end
-
-      @action.cast_arguments!
-
-      status = "succeeded"
-      error_message = nil
-
       begin
-        @action.perform
+        unless @action.execute
+          flash.now[:alert] = "Please fix the errors below."
+          render :new, status: :unprocessable_entity
+          return
+        end
+
+        status = "succeeded"
+        error_message = nil
       rescue => error
         status = "failed"
         error_message = error.message
