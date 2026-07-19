@@ -21,6 +21,8 @@ module MoActions
   end
 end
 
+require "mo_actions/argument_definition"
 require "mo_actions/registry"
 require "mo_actions/base"
 require "mo_actions/engine"
+
