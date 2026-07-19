@@ -2,27 +2,26 @@
 
 ## Goal
 
-Reject invalid argument input before `perform` runs, and show field errors on the generated run form.
+Let operators start a new run pre-filled from a past execution ("Run again").
 
 ## In scope
 
-- Requiredness on the argument DSL (`argument :name, type: :string, required: true` or equivalent small API)
-- Validate/coerce submitted params in the dashboard `run` action before instantiating/`perform`
-- On failure: no execution record, re-render the index (or a minimal run form) with per-field errors and prior values
-- Clear errors for blank required values and obviously bad casts (e.g. non-integer for `:integer`)
-- Tests for required blank, bad cast, successful path still creates an execution
+- "Run again" control on `executions#show` (and optionally the index row)
+- Opens `executions#new` for the same action key with argument fields pre-filled from the past execution's stored arguments
+- Creates a **new** execution when submitted (original untouched)
+- If the action key is no longer registered → no Run again (or 404), detail page still readable
+- Tests: prefill values, submit creates a new record, original unchanged, unregistered action has no control
 
 ## Out of scope
 
-- Drafts / edit-before-run flow
+- Drafts / edit-before-run persistence before confirm
 - Async execution, progress, logs, batching
-- Preflight, authorization rules, audit export, retention/cleanup
-- Execution detail / show page, re-run from a past execution
-- Composite/array/file argument types
+- File arguments / copying ActiveStorage attachments
+- Preflight, authorization rules, retention/cleanup
+- Filtered audit tabs
 
 ## Done when
 
-- Invalid runs do not call `perform` and do not create an `Execution`.
-- The operator sees which fields failed and why.
-- Valid runs still succeed and persist as today.
+- Operators can re-run from a past execution with prior arguments filled in.
+- Submitting creates a distinct new execution; the source record is unchanged.
 - Full suite green.
