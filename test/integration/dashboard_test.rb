@@ -32,6 +32,15 @@ class CapturingArgsTestAction < MoActions::Base
   end
 end
 
+class FailingTestAction < MoActions::Base
+  display_name "Failing Test"
+  category :testing
+
+  def perform
+    raise "boom"
+  end
+end
+
 class DashboardTest < ActionDispatch::IntegrationTest
   setup do
     @user = User.create!(name: "Operator")
@@ -92,8 +101,69 @@ class DashboardTest < ActionDispatch::IntegrationTest
   end
 
   test "running an unknown action returns 404" do
-    post mo_actions.run_action_path("nonexistent")
+    assert_no_difference -> { MoActions::Execution.count } do
+      post mo_actions.run_action_path("nonexistent")
+    end
 
     assert_response :not_found
+  end
+
+  test "running an action creates a succeeded execution with performer and arguments" do
+    assert_difference -> { MoActions::Execution.count }, 1 do
+      post mo_actions.run_action_path("capturing_args_test"), params: {
+        arguments: { label: "hello", count: "3", enabled: "1" }
+      }
+    end
+
+    execution = MoActions::Execution.recent.first
+    assert_equal "capturing_args_test", execution.action_key
+    assert_equal "succeeded", execution.status
+    assert_equal @user, execution.performer
+    assert_equal({ "label" => "hello", "count" => 3, "enabled" => true }, execution.arguments)
+    assert_nil execution.error_message
+  end
+
+  test "perform raising records a failed execution and flashes an alert" do
+    assert_difference -> { MoActions::Execution.count }, 1 do
+      post mo_actions.run_action_path("failing_test")
+    end
+
+    assert_redirected_to mo_actions.root_path
+    follow_redirect!
+    assert_select "p.alert", "Failing Test failed: boom"
+
+    execution = MoActions::Execution.recent.first
+    assert_equal "failing_test", execution.action_key
+    assert_equal "failed", execution.status
+    assert_equal "boom", execution.error_message
+    assert_equal @user, execution.performer
+  end
+
+  test "dashboard lists recent executions" do
+    MoActions::Execution.create!(
+      action_key: "counting_test",
+      status: "succeeded",
+      performer: @user,
+      arguments: {}
+    )
+    MoActions::Execution.create!(
+      action_key: "failing_test",
+      status: "failed",
+      performer: @user,
+      arguments: {},
+      error_message: "boom"
+    )
+
+    get mo_actions.root_path
+
+    assert_response :success
+    assert_select "section.recent-executions" do
+      assert_select "h2", "Recent executions"
+      assert_select "td", "Counting Test"
+      assert_select "td", "succeeded"
+      assert_select "td", "Failing Test"
+      assert_select "td", "failed"
+      assert_select "td", "Operator"
+    end
   end
 end

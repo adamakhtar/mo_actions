@@ -43,3 +43,33 @@
     </ul>
   </section>
 <% end %>
+
+<section class="recent-executions">
+  <h2>Recent executions</h2>
+  <% if @recent_executions.empty? %>
+    <p>No executions yet.</p>
+  <% else %>
+    <table>
+      <thead>
+        <tr>
+          <th>Action</th>
+          <th>Status</th>
+          <th>Performer</th>
+          <th>Arguments</th>
+          <th>When</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @recent_executions.each do |execution| %>
+          <tr>
+            <td><%= execution.action_display_name %></td>
+            <td><%= execution.status %></td>
+            <td><%= execution.performer&.try(:name) || execution.performer || "—" %></td>
+            <td><%= execution.arguments.presence || "—" %></td>
+            <td><%= execution.created_at %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% end %>
+</section>

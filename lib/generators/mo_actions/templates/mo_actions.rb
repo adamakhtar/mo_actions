@@ -23,8 +23,8 @@ MoActions.configure do |config|
   #   end
   config.authenticate_with = nil
 
-  # Resolve the current performer for dashboard views and future executions.
-  # Receives the engine controller.
+  # Resolve the current performer for dashboard views and execution records.
+  # Receives the engine controller. Stored polymorphically on each run.
   #
   # Example:
   #   config.current_performer = ->(controller) do
