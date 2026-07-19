@@ -2,16 +2,19 @@
 
 This project is built in small working slices. Keep the process agile: decide only the next useful step, complete it, then update the project memory.
 
+Cursor agents are instructed to follow this file automatically via `.cursor/rules/agent-process.mdc` whenever the user asks for the next feature/step/slice. This doc remains the source of truth for the process.
+
 ## Before starting work
 
 1. Read this file.
 2. Read `docs/PRODUCT_DIRECTION.md`.
 3. Read `docs/WORKING_STATE.md`.
 4. Read `docs/NEXT_STEP.md`.
-5. If the current slice needs more context, selectively consult:
+5. Confirm the suggested next step is still undone on `main` (and not already shipped on another merged branch). If `NEXT_STEP.md` is stale, correct it before coding.
+6. If the current slice needs more context, selectively consult:
    - `docs/TECHNICAL_REQUIREMENTS.md`
    - `docs/ACCEPTANCE_CRITERIA.md`
-6. Do only the current next step unless the user explicitly changes direction.
+7. Do only the current next step unless the user explicitly changes direction.
 
 ## Reference material
 

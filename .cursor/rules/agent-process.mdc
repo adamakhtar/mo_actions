@@ -1,0 +1,38 @@
+---
+description: Follow the stair-step agent process when building the next feature
+alwaysApply: true
+---
+
+# Mo Actions agent process
+
+When the user asks to build the next feature, next step, next slice, or similar — **do not invent scope**. Follow `docs/AGENT_PROCESS.md`.
+
+## Required before coding
+
+1. Read `docs/AGENT_PROCESS.md`
+2. Read `docs/PRODUCT_DIRECTION.md`
+3. Read `docs/WORKING_STATE.md`
+4. Read `docs/NEXT_STEP.md`
+5. Confirm the suggested next step is still undone on `main` (and not already merged via another PR/branch). If `NEXT_STEP.md` is stale, update it and pick the real next slice.
+6. Build **only** that one slice unless the user explicitly changes direction.
+
+Optional context when the slice needs it: `docs/TECHNICAL_REQUIREMENTS.md`, `docs/ACCEPTANCE_CRITERIA.md`. Do not implement those wholesale.
+
+## Working rules (from AGENT_PROCESS)
+
+- Leave the gem in a working state after every change
+- Smallest useful slice; simple models first
+- No future-phase infrastructure
+- Record non-obvious design choices in `docs/WORKING_STATE.md`
+
+## Required before finishing
+
+Update:
+
+1. `docs/WORKING_STATE.md` — what works, shape, tests
+2. `docs/NEXT_STEP.md` — exactly one next slice (in/out of scope + done criteria)
+3. `docs/PRODUCT_DIRECTION.md` — only if product intent changed
+
+PR = one working slice + tests (when code changes) + docs reflecting reality.
+
+Phrases that trigger this process include: "next feature", "next step", "next slice", "build the next…", "continue", "what's next / build it".
