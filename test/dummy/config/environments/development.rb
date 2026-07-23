@@ -55,6 +55,9 @@ Rails.application.configure do
   # Highlight code that enqueued background job in logs.
   config.active_job.verbose_enqueue_logs = true
 
+  # Async so create can redirect while DemoBackfillAction is still running.
+  config.active_job.queue_adapter = :async
+
   # Highlight code that triggered redirect in logs.
   config.action_dispatch.verbose_redirect_logs = true
 

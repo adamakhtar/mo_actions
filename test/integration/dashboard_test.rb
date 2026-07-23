@@ -10,7 +10,7 @@ class CountingTestAction < MoActions::Base
   end
   self.performed_count = 0
 
-  def perform
+  def perform(_ctx)
     self.class.performed_count += 1
   end
 end
@@ -27,7 +27,7 @@ class CapturingArgsTestAction < MoActions::Base
     attr_accessor :last_values
   end
 
-  def perform
+  def perform(_ctx)
     self.class.last_values = { label: label, count: count, enabled: enabled }
   end
 end
@@ -36,7 +36,7 @@ class FailingTestAction < MoActions::Base
   display_name "Failing Test"
   category :testing
 
-  def perform
+  def perform(_ctx)
     raise "boom"
   end
 end
@@ -53,9 +53,11 @@ class DashboardTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "h2", "Billing"
     assert_select "h2", "Maintenance"
+    assert_select "h2", "Testing"
     assert_select "li", /Send Invoice Reminders/
     assert_select "li", /Emails a reminder to every customer with an overdue invoice\./
     assert_select "li", /Purge Stale Sessions/
+    assert_select "li", /Demo Backfill/
     assert_select "a[href=?]", mo_actions.new_execution_path(action_key: "purge_stale_sessions"), text: "Run"
     assert_select "a[href=?]", mo_actions.executions_path(action_key: "purge_stale_sessions"), text: "Executions"
     assert_select "a[href=?]", mo_actions.executions_path, text: "All executions"
@@ -91,7 +93,8 @@ class DashboardTest < ActionDispatch::IntegrationTest
       arguments: { label: "hello", count: "3", enabled: "1" }
     }
 
-    assert_redirected_to mo_actions.executions_path(action_key: "capturing_args_test")
+    execution = MoActions::Execution.recent.first
+    assert_redirected_to mo_actions.execution_path(execution)
     assert_equal(
       { label: "hello", count: 3, enabled: true },
       CapturingArgsTestAction.last_values
@@ -103,7 +106,8 @@ class DashboardTest < ActionDispatch::IntegrationTest
       post mo_actions.executions_path, params: { action_key: "counting_test" }
     end
 
-    assert_redirected_to mo_actions.executions_path(action_key: "counting_test")
+    execution = MoActions::Execution.recent.first
+    assert_redirected_to mo_actions.execution_path(execution)
     follow_redirect!
     assert_select "p.notice", "Counting Test ran successfully."
   end
@@ -139,11 +143,11 @@ class DashboardTest < ActionDispatch::IntegrationTest
       post mo_actions.executions_path, params: { action_key: "failing_test" }
     end
 
-    assert_redirected_to mo_actions.executions_path(action_key: "failing_test")
+    execution = MoActions::Execution.recent.first
+    assert_redirected_to mo_actions.execution_path(execution)
     follow_redirect!
     assert_select "p.alert", "Failing Test failed: boom"
 
-    execution = MoActions::Execution.recent.first
     assert_equal "failing_test", execution.action_key
     assert_equal "failed", execution.status
     assert_equal "boom", execution.error_message
@@ -202,12 +206,14 @@ class DashboardTest < ActionDispatch::IntegrationTest
     assert_select "a[href=?]", mo_actions.execution_path(execution), text: "Counting Test"
   end
 
-  test "execution show renders succeeded run detail" do
+  test "execution show renders succeeded run detail with progress" do
     execution = MoActions::Execution.create!(
       action_key: "capturing_args_test",
       status: "succeeded",
       performer: @user,
-      arguments: { "label" => "hello", "count" => 3, "enabled" => true }
+      arguments: { "label" => "hello", "count" => 3, "enabled" => true },
+      progress_current: 3,
+      progress_total: 3
     )
 
     get mo_actions.execution_path(execution)
@@ -218,6 +224,8 @@ class DashboardTest < ActionDispatch::IntegrationTest
       assert_select "dd", /Capturing Args Test/
       assert_select "dd .action-key", "(capturing_args_test)"
       assert_select "dd", "succeeded"
+      assert_select "dd.progress", /3 \/ 3/
+      assert_select "dd.progress", /100%/
       assert_select "dd", "Operator"
       assert_select "dd", /hello/
     end
@@ -261,7 +269,8 @@ class DashboardTest < ActionDispatch::IntegrationTest
       }
     end
 
-    assert_redirected_to mo_actions.executions_path(action_key: "capturing_args_test")
+    execution = MoActions::Execution.recent.first
+    assert_redirected_to mo_actions.execution_path(execution)
     assert_equal original_attributes, original.reload.attributes
     assert_equal(
       { label: "hello", count: 3, enabled: true },
@@ -300,6 +309,23 @@ class DashboardTest < ActionDispatch::IntegrationTest
     assert_select "a", text: "Run again", count: 0
   end
 
+  test "running execution show offers a refresh link" do
+    execution = MoActions::Execution.create!(
+      action_key: "demo_backfill",
+      status: "running",
+      arguments: { "steps" => 5 },
+      progress_current: 2,
+      progress_total: 5
+    )
+
+    get mo_actions.execution_path(execution)
+
+    assert_response :success
+    assert_select "dd", "running"
+    assert_select "dd.progress", /2 \/ 5/
+    assert_select "a[href=?]", mo_actions.execution_path(execution), text: "Refresh"
+  end
+
   test "unknown execution id returns 404" do
     get mo_actions.execution_path(id: 0)
 
@@ -335,5 +361,18 @@ class DashboardTest < ActionDispatch::IntegrationTest
     assert_select "input[name='arguments[label]'][value=hello]"
     assert_select "input[name='arguments[count]'][value=abc]"
     assert_select "span.error", /Count is not a number/
+  end
+
+  test "creating demo backfill persists progress through perform" do
+    post mo_actions.executions_path, params: {
+      action_key: "demo_backfill",
+      arguments: { steps: "4" }
+    }
+
+    execution = MoActions::Execution.recent.first
+    assert_redirected_to mo_actions.execution_path(execution)
+    assert_equal "succeeded", execution.reload.status
+    assert_equal 4, execution.progress_total
+    assert_equal 4, execution.progress_current
   end
 end
